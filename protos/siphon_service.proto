@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package siphon_service;
+
+// Service definition for managing a single variable
+service SiphonService {
+  // Get the current value of the variable
+  rpc GetAttribute(GetSiphonRequest) returns (GetSiphonResponse);
+  
+  // Set the value of the variable
+  rpc SetAttribute(SetSiphonRequest) returns (SetSiphonResponse);
+
+  // Input a key
+  rpc InputKey(InputKeyRequest) returns (InputKeyResponse);
+
+
+  // Capture a frame
+  rpc CaptureFrame(CaptureFrameRequest) returns (CaptureFrameResponse);
+}
+
+// Request message for getting variable
+message GetSiphonRequest {
+  // Empty - we only have one variable
+  string attributeName = 1;
+}
+
+// Response message for getting variable
+message GetSiphonResponse {
+  bool success = 1;
+  string message = 2;
+  
+  oneof value {
+    int32 int_value = 3;
+    float float_value = 4;
+    bytes array_value = 5;
+  }
+}
+
+// Request message for setting variable
+message SetSiphonRequest {
+  string attributeName = 1;
+  
+  oneof value {
+    int32 int_value = 2;
+    float float_value = 3;
+    bytes array_value = 4;
+  }
+}
+
+// Response message for setting variable
+message SetSiphonResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Request message for inputting a key
+message InputKeyRequest {
+  string key = 1;
+  string value = 2;
+}
+
+// Response message for inputting a key
+message InputKeyResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Request message for capturing a frame
+message CaptureFrameRequest {
+  // Empty - we only have one frame
+}
+
+// Response message for capturing a frame
+message CaptureFrameResponse {
+  bytes frame = 1;
+  int32 width = 2;
+  int32 height = 3;
+  bool success = 4;
+  string message = 5;
+}
