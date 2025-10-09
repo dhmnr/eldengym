@@ -13,6 +13,9 @@ service SiphonService {
   // Input a key
   rpc InputKey(InputKeyRequest) returns (InputKeyResponse);
 
+  // Move mouse
+  rpc MoveMouse(MoveMouseRequest) returns (MoveMouseResponse);
+
 
   // Capture a frame
   rpc CaptureFrame(CaptureFrameRequest) returns (CaptureFrameResponse);
@@ -33,6 +36,7 @@ message GetSiphonResponse {
     int32 int_value = 3;
     float float_value = 4;
     bytes array_value = 5;
+    bool bool_value = 6;
   }
 }
 
@@ -44,6 +48,7 @@ message SetSiphonRequest {
     int32 int_value = 2;
     float float_value = 3;
     bytes array_value = 4;
+    bool bool_value = 5;
   }
 }
 
@@ -55,12 +60,27 @@ message SetSiphonResponse {
 
 // Request message for inputting a key
 message InputKeyRequest {
-  string key = 1;
-  string value = 2;
+  repeated string keys = 1;
+  int32 hold_ms = 2;
+  int32 delay_ms = 3;
+
 }
 
 // Response message for inputting a key
 message InputKeyResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Request message for moving mouse
+message MoveMouseRequest {
+  int32 delta_x = 1;
+  int32 delta_y = 2;
+  int32 steps = 3;
+}
+
+// Response message for moving mouse
+message MoveMouseResponse {
   bool success = 1;
   string message = 2;
 }

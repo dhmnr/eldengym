@@ -24,14 +24,15 @@ class SiphonClient:
         self.stub = siphon_service_pb2_grpc.SiphonServiceStub(self.channel)
  
     
-    def send_key(self, key, hold_time):
+    def send_key(self, keys, hold_time, delay_time=0):
         """
         Send a key to the server.
         Args:
-            key: string, key to press, e.g., 'w' or 'space'
+            keys: list of strings, keys to press, e.g., ['w', 'space']
             hold_time: string, time to hold the key in milliseconds
+            delay_time: string, time to delay between keys in milliseconds
         """
-        request = siphon_service_pb2.InputKeyRequest(key=key, value=hold_time)
+        request = siphon_service_pb2.InputKeyRequest(keys=keys, hold_ms=hold_time, delay_ms=delay_time)
         return self.stub.InputKey(request)
     
     def get_attribute(self, attributeName):
@@ -115,7 +116,6 @@ class SiphonClient:
         global_z = self.get_attribute('HeroGlobalPosZ')
         return global_x, global_y, global_z
     
-    
     def teleport(self, x, y, z):
         """
         Teleport the player to the given coordinates.
@@ -146,8 +146,8 @@ class SiphonClient:
         # FIXME: This is a hack to start boss fight. Need to check fogwall state. or use another method.
         x,y,z = (19.958229064941406, -7.051832675933838, -11.990748405456543)
         self.teleport(x, y, z)
-        self.send_key('W', '200')   
-        self.send_key('E', '200')
+        self.send_key('W', 200)   
+        self.send_key('E', 200)
 
     def set_angle(self, angle):
         """

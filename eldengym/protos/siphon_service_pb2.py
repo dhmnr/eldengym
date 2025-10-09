@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14siphon_service.proto\x12\x0esiphon_service\")\n\x10GetSiphonRequest\x12\x15\n\rattributeName\x18\x01 \x01(\t\"\x81\x01\n\x11GetSiphonResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x13\n\tint_value\x18\x03 \x01(\x05H\x00\x12\x15\n\x0b\x66loat_value\x18\x04 \x01(\x02H\x00\x12\x15\n\x0b\x61rray_value\x18\x05 \x01(\x0cH\x00\x42\x07\n\x05value\"u\n\x10SetSiphonRequest\x12\x15\n\rattributeName\x18\x01 \x01(\t\x12\x13\n\tint_value\x18\x02 \x01(\x05H\x00\x12\x15\n\x0b\x66loat_value\x18\x03 \x01(\x02H\x00\x12\x15\n\x0b\x61rray_value\x18\x04 \x01(\x0cH\x00\x42\x07\n\x05value\"5\n\x11SetSiphonResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"-\n\x0fInputKeyRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"4\n\x10InputKeyResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x15\n\x13\x43\x61ptureFrameRequest\"f\n\x14\x43\x61ptureFrameResponse\x12\r\n\x05\x66rame\x18\x01 \x01(\x0c\x12\r\n\x05width\x18\x02 \x01(\x05\x12\x0e\n\x06height\x18\x03 \x01(\x05\x12\x0f\n\x07success\x18\x04 \x01(\x08\x12\x0f\n\x07message\x18\x05 \x01(\t2\xe3\x02\n\rSiphonService\x12S\n\x0cGetAttribute\x12 .siphon_service.GetSiphonRequest\x1a!.siphon_service.GetSiphonResponse\x12S\n\x0cSetAttribute\x12 .siphon_service.SetSiphonRequest\x1a!.siphon_service.SetSiphonResponse\x12M\n\x08InputKey\x12\x1f.siphon_service.InputKeyRequest\x1a .siphon_service.InputKeyResponse\x12Y\n\x0c\x43\x61ptureFrame\x12#.siphon_service.CaptureFrameRequest\x1a$.siphon_service.CaptureFrameResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14siphon_service.proto\x12\x0esiphon_service\")\n\x10GetSiphonRequest\x12\x15\n\rattributeName\x18\x01 \x01(\t\"\x97\x01\n\x11GetSiphonResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x13\n\tint_value\x18\x03 \x01(\x05H\x00\x12\x15\n\x0b\x66loat_value\x18\x04 \x01(\x02H\x00\x12\x15\n\x0b\x61rray_value\x18\x05 \x01(\x0cH\x00\x12\x14\n\nbool_value\x18\x06 \x01(\x08H\x00\x42\x07\n\x05value\"\x8b\x01\n\x10SetSiphonRequest\x12\x15\n\rattributeName\x18\x01 \x01(\t\x12\x13\n\tint_value\x18\x02 \x01(\x05H\x00\x12\x15\n\x0b\x66loat_value\x18\x03 \x01(\x02H\x00\x12\x15\n\x0b\x61rray_value\x18\x04 \x01(\x0cH\x00\x12\x14\n\nbool_value\x18\x05 \x01(\x08H\x00\x42\x07\n\x05value\"5\n\x11SetSiphonResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"B\n\x0fInputKeyRequest\x12\x0c\n\x04keys\x18\x01 \x03(\t\x12\x0f\n\x07hold_ms\x18\x02 \x01(\x05\x12\x10\n\x08\x64\x65lay_ms\x18\x03 \x01(\x05\"4\n\x10InputKeyResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"C\n\x10MoveMouseRequest\x12\x0f\n\x07\x64\x65lta_x\x18\x01 \x01(\x05\x12\x0f\n\x07\x64\x65lta_y\x18\x02 \x01(\x05\x12\r\n\x05steps\x18\x03 \x01(\x05\"5\n\x11MoveMouseResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x15\n\x13\x43\x61ptureFrameRequest\"f\n\x14\x43\x61ptureFrameResponse\x12\r\n\x05\x66rame\x18\x01 \x01(\x0c\x12\r\n\x05width\x18\x02 \x01(\x05\x12\x0e\n\x06height\x18\x03 \x01(\x05\x12\x0f\n\x07success\x18\x04 \x01(\x08\x12\x0f\n\x07message\x18\x05 \x01(\t2\xb5\x03\n\rSiphonService\x12S\n\x0cGetAttribute\x12 .siphon_service.GetSiphonRequest\x1a!.siphon_service.GetSiphonResponse\x12S\n\x0cSetAttribute\x12 .siphon_service.SetSiphonRequest\x1a!.siphon_service.SetSiphonResponse\x12M\n\x08InputKey\x12\x1f.siphon_service.InputKeyRequest\x1a .siphon_service.InputKeyResponse\x12P\n\tMoveMouse\x12 .siphon_service.MoveMouseRequest\x1a!.siphon_service.MoveMouseResponse\x12Y\n\x0c\x43\x61ptureFrame\x12#.siphon_service.CaptureFrameRequest\x1a$.siphon_service.CaptureFrameResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,19 +34,23 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GETSIPHONREQUEST']._serialized_start=40
   _globals['_GETSIPHONREQUEST']._serialized_end=81
   _globals['_GETSIPHONRESPONSE']._serialized_start=84
-  _globals['_GETSIPHONRESPONSE']._serialized_end=213
-  _globals['_SETSIPHONREQUEST']._serialized_start=215
-  _globals['_SETSIPHONREQUEST']._serialized_end=332
-  _globals['_SETSIPHONRESPONSE']._serialized_start=334
-  _globals['_SETSIPHONRESPONSE']._serialized_end=387
-  _globals['_INPUTKEYREQUEST']._serialized_start=389
-  _globals['_INPUTKEYREQUEST']._serialized_end=434
-  _globals['_INPUTKEYRESPONSE']._serialized_start=436
-  _globals['_INPUTKEYRESPONSE']._serialized_end=488
-  _globals['_CAPTUREFRAMEREQUEST']._serialized_start=490
-  _globals['_CAPTUREFRAMEREQUEST']._serialized_end=511
-  _globals['_CAPTUREFRAMERESPONSE']._serialized_start=513
-  _globals['_CAPTUREFRAMERESPONSE']._serialized_end=615
-  _globals['_SIPHONSERVICE']._serialized_start=618
-  _globals['_SIPHONSERVICE']._serialized_end=973
+  _globals['_GETSIPHONRESPONSE']._serialized_end=235
+  _globals['_SETSIPHONREQUEST']._serialized_start=238
+  _globals['_SETSIPHONREQUEST']._serialized_end=377
+  _globals['_SETSIPHONRESPONSE']._serialized_start=379
+  _globals['_SETSIPHONRESPONSE']._serialized_end=432
+  _globals['_INPUTKEYREQUEST']._serialized_start=434
+  _globals['_INPUTKEYREQUEST']._serialized_end=500
+  _globals['_INPUTKEYRESPONSE']._serialized_start=502
+  _globals['_INPUTKEYRESPONSE']._serialized_end=554
+  _globals['_MOVEMOUSEREQUEST']._serialized_start=556
+  _globals['_MOVEMOUSEREQUEST']._serialized_end=623
+  _globals['_MOVEMOUSERESPONSE']._serialized_start=625
+  _globals['_MOVEMOUSERESPONSE']._serialized_end=678
+  _globals['_CAPTUREFRAMEREQUEST']._serialized_start=680
+  _globals['_CAPTUREFRAMEREQUEST']._serialized_end=701
+  _globals['_CAPTUREFRAMERESPONSE']._serialized_start=703
+  _globals['_CAPTUREFRAMERESPONSE']._serialized_end=805
+  _globals['_SIPHONSERVICE']._serialized_start=808
+  _globals['_SIPHONSERVICE']._serialized_end=1245
 # @@protoc_insertion_point(module_scope)

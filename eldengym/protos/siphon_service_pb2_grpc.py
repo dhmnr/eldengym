@@ -50,6 +50,11 @@ class SiphonServiceStub(object):
                 request_serializer=siphon__service__pb2.InputKeyRequest.SerializeToString,
                 response_deserializer=siphon__service__pb2.InputKeyResponse.FromString,
                 _registered_method=True)
+        self.MoveMouse = channel.unary_unary(
+                '/siphon_service.SiphonService/MoveMouse',
+                request_serializer=siphon__service__pb2.MoveMouseRequest.SerializeToString,
+                response_deserializer=siphon__service__pb2.MoveMouseResponse.FromString,
+                _registered_method=True)
         self.CaptureFrame = channel.unary_unary(
                 '/siphon_service.SiphonService/CaptureFrame',
                 request_serializer=siphon__service__pb2.CaptureFrameRequest.SerializeToString,
@@ -82,6 +87,13 @@ class SiphonServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def MoveMouse(self, request, context):
+        """Move mouse
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def CaptureFrame(self, request, context):
         """Capture a frame
         """
@@ -106,6 +118,11 @@ def add_SiphonServiceServicer_to_server(servicer, server):
                     servicer.InputKey,
                     request_deserializer=siphon__service__pb2.InputKeyRequest.FromString,
                     response_serializer=siphon__service__pb2.InputKeyResponse.SerializeToString,
+            ),
+            'MoveMouse': grpc.unary_unary_rpc_method_handler(
+                    servicer.MoveMouse,
+                    request_deserializer=siphon__service__pb2.MoveMouseRequest.FromString,
+                    response_serializer=siphon__service__pb2.MoveMouseResponse.SerializeToString,
             ),
             'CaptureFrame': grpc.unary_unary_rpc_method_handler(
                     servicer.CaptureFrame,
@@ -195,6 +212,33 @@ class SiphonService(object):
             '/siphon_service.SiphonService/InputKey',
             siphon__service__pb2.InputKeyRequest.SerializeToString,
             siphon__service__pb2.InputKeyResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def MoveMouse(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/siphon_service.SiphonService/MoveMouse',
+            siphon__service__pb2.MoveMouseRequest.SerializeToString,
+            siphon__service__pb2.MoveMouseResponse.FromString,
             options,
             channel_credentials,
             insecure,
