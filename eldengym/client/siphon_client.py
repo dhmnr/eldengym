@@ -2,7 +2,7 @@ import grpc
 import numpy as np
 import cv2
 import os
-from .protos import siphon_service_pb2, siphon_service_pb2_grpc
+from ..protos import siphon_service_pb2, siphon_service_pb2_grpc
 from time import sleep
 
 
@@ -97,71 +97,6 @@ class SiphonClient:
         Close the channel.
         """
         self.channel.close()
-
-    def get_local_coords(self):
-        """
-        Get the location of the player.
-        """
-        local_x = self.get_attribute('HeroLocalPosX')
-        local_y = self.get_attribute('HeroLocalPosY')
-        local_z = self.get_attribute('HeroLocalPosZ')
-        return local_x, local_y, local_z
-
-    def get_global_coords(self):
-        """
-        Get the location of the player.
-        """
-        global_x = self.get_attribute('HeroGlobalPosX')
-        global_y = self.get_attribute('HeroGlobalPosY')
-        global_z = self.get_attribute('HeroGlobalPosZ')
-        return global_x, global_y, global_z
-    
-    def teleport(self, x, y, z):
-        """
-        Teleport the player to the given coordinates.
-        """
-        # FIXME: Close range teleport, need to check MapId for long range teleport.
-        local_x, local_y, local_z = self.get_local_coords()
-        global_x, global_y, global_z = self.get_global_coords()
-        self.set_attribute('HeroLocalPosX', local_x + (x - global_x))
-        self.set_attribute('HeroLocalPosY', local_y + (y - global_y))
-        self.set_attribute('HeroLocalPosZ', local_z + (z - global_z))
-    
-    def set_hp(self, hp):
-        """
-        Set the health of the player.
-        """
-        self.set_attribute('HeroHp', hp)
-    
-    def get_hp(self):
-        """
-        Get the health of the player.
-        """
-        return self.get_attribute('HeroHp')
-
-    def start_fight(self, boss_name='Margit'):
-        """
-        Start the fight with the given boss.
-        """
-        # FIXME: This is a hack to start boss fight. Need to check fogwall state. or use another method.
-        x,y,z = (19.958229064941406, -7.051832675933838, -11.990748405456543)
-        self.teleport(x, y, z)
-        self.send_key('W', 200)   
-        self.send_key('E', 200)
-
-    def set_angle(self, angle):
-        """
-        Set the angle of the player.
-        """
-        self.set_attribute('HeroAngle', angle)
-
-
-    def reset_game(self):
-        """
-        Reset the game.
-        """
-        self.set_hp(0)
-        sleep(20) # FIXME: This is a hack to wait for the game to reset
 
         
 

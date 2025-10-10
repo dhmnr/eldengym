@@ -1,22 +1,24 @@
 import gymnasium as gym
 import numpy as np
-from .client import SiphonClient
+from .client.elden_client import EldenClient
 from .rewards import RewardFunction, ScoreDeltaReward
+from time import sleep
 
 class EldenGymEnv(gym.Env):
     metadata = {'render_modes': ['human', 'rgb_array']}
     
     def __init__(
-        self, 
+        self,
+        scenario_name='Margit',
         host='localhost:50051',
-        memory_addresses=None,
         reward_fn=None,
         action_map=None,
         render_mode=None
     ):
         super().__init__()
         
-        self.client = SiphonClient(host)
+        self.scenario_name = scenario_name
+        self.client = EldenClient(host)
         self.render_mode = render_mode
         
         # Reward function (user-provided or default)
@@ -41,40 +43,34 @@ class EldenGymEnv(gym.Env):
     def _default_action_map(self):
         """Default keyboard action mapping"""
         return {
-            0: [],                    # no-op
-            1: ['w'],                 # up
-            2: ['s'],                 # down
-            3: ['a'],                 # left
-            4: ['d'],                 # right
-            5: ['space'],             # jump/action
-            6: ['shift'],             # sprint/dodge
-            7: ['shift', 'w'],        # sprint forward/dodge forward
-            8: ['shift', 's'],        # sprint backward/dodge backward
-            9: ['shift', 'a'],        # sprint left/dodge left
-            10: ['shift', 'd'],       # sprint right/dodge right
-            11: ['e'],                # interact
-            12: ['lmb'],              # left click
-            13: ['rmb'],              # right click
-            14: ['mmb'],              # middle click
-            15: ['r'],                # use item
+            'no-op': [],                    
+            'forward': ['w'],                 
+            'backward': ['s'],                
+            'left': ['a'],                 
+            'right': ['d'],                 
+            'jump': ['space'],            
+            'dodge/sprint': ['shift'],             
+            'dodge/sprint_forward': ['w', 'shift'],       
+            'dodge/sprint_backward': ['s', 'shift'],        
+            'dodge/sprint_left': ['a', 'shift'],       
+            'dodge/sprint_right': ['d', 'shift'],       
+            'interact': ['e'],                
+            'left_click': ['left'],              
+            'right_click': ['right'],             
+            'middle_click': ['middle'],            
+            'use_item': ['r'],            
         }
     
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         
-        self.client.reset()
+        self.client.reset_game()
+        self.client.start_scenario(self.scenario_name)
+        sleep(1) # FIXME: This is a hack to wait for the fight to start.
         self._prev_info = None
         
         # Get initial observation
         obs = self._get_observation()
-        
-        # Set observation space if not yet defined
-        if self.observation_space is None:
-            self.observation_space = gym.spaces.Box(
-                low=0, high=255,
-                shape=obs.shape,
-                dtype=np.uint8
-            )
         
         info = self._get_info()
         self._prev_info = info.copy()
@@ -88,7 +84,6 @@ class EldenGymEnv(gym.Env):
         
         # Get new state
         obs = self._get_observation()
-        info = self._get_info()
         
         # Calculate reward using user's function
         reward = self.reward_fn.calculate(obs, info, self._prev_info)
@@ -97,34 +92,20 @@ class EldenGymEnv(gym.Env):
         terminated = self.reward_fn.is_done(obs, info)
         truncated = False
         
-        # Update previous info
-        self._prev_info = info.copy()
-        
         return obs, reward, terminated, truncated, info
     
     def _get_observation(self):
         """Get processed frame from server"""
         frame = self.client.get_frame()
-        self._current_frame = frame
-        return frame
+        return {
+            'frame': frame,
+            'boss_hp': self.client.target_hp / self.client.target_max_hp,
+            'player_hp': self.client.player_hp / self.client.player_max_hp,
+            'distance': self.client.target_player_distance,
+            'boss_animation': self.client.target_animation_id,
+            'player_animation': self.client.player_animation_id,    
+        }
     
-    def _get_info(self):
-        """Read memory values"""
-        if not hasattr(self, 'memory_addresses') or self.memory_addresses is None:
-            return {}
-        
-        attributeNames = list(self.memory_addresses.keys())
-        values = self.client.get_attribute(attributeNames)
-        
-        return values
-    
-    def render(self):
-        """Render the current frame."""
-        if self.render_mode == 'rgb_array':
-            return self._current_frame
-        elif self.render_mode == 'human':
-            # Could add cv2.imshow here
-            return self._current_frame
     
     def close(self):
         self.client.close()
