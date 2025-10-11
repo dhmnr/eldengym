@@ -32,7 +32,7 @@ class RewardFunction(ABC):
 class ScoreDeltaReward(RewardFunction):
     """Example: reward based on score increase"""
     
-    def __init__(self, score_key='score'):
+    def __init__(self, score_key='player_hp'):
         self.score_key = score_key
     
     def calculate(self, obs, info, prev_info=None):
@@ -41,7 +41,7 @@ class ScoreDeltaReward(RewardFunction):
         return info[self.score_key] - prev_info[self.score_key]
     
     def is_done(self, obs, info):
-        return info.get('lives', 1) <= 0
+        return info.get('player_hp', 1) <= 100
 
 
 class CustomReward(RewardFunction):

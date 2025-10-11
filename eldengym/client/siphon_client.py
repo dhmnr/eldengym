@@ -91,7 +91,14 @@ class SiphonClient:
         # save_path = os.path.join(os.path.dirname(__file__), 'frame.png')
         # cv2.imwrite(save_path, frame)
         return frame
-    
+
+    def move_mouse(self, delta_x, delta_y, steps=1):
+        """
+        Move the mouse by the given delta.
+        """
+        request = siphon_service_pb2.MoveMouseRequest(delta_x=delta_x, delta_y=delta_y, steps=steps)
+        return self.stub.MoveMouse(request)
+
     def close(self):
         """
         Close the channel.

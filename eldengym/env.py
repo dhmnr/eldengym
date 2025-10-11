@@ -9,7 +9,7 @@ class EldenGymEnv(gym.Env):
     
     def __init__(
         self,
-        scenario_name='Margit',
+        scenario_name='margit',
         host='localhost:50051',
         reward_fn=None,
         action_map=None,
@@ -22,7 +22,7 @@ class EldenGymEnv(gym.Env):
         self.render_mode = render_mode
         
         # Reward function (user-provided or default)
-        self.reward_fn = reward_fn or ScoreDeltaReward(score_key='score')
+        self.reward_fn = reward_fn or ScoreDeltaReward(score_key='player_hp')
         if not isinstance(self.reward_fn, RewardFunction):
             raise TypeError("reward_fn must inherit from RewardFunction")
         
@@ -40,25 +40,38 @@ class EldenGymEnv(gym.Env):
         self._prev_info = None
         self._current_frame = None
     
+    def action_to_index(self, action):
+        return {
+            'no-op': 0, 
+            'forward': 1, 
+            'backward': 2, 
+            'left': 3, 
+            'right': 4, 
+            'jump': 5, 
+            'dodge_forward': 6, 
+            'dodge_backward': 7, 
+            'dodge_left': 8, 
+            'dodge_right': 9, 
+            'interact': 10, 
+            'attack': 11, 
+            'use_item': 12}
+    
     def _default_action_map(self):
         """Default keyboard action mapping"""
         return {
-            'no-op': [],                    
-            'forward': ['w'],                 
-            'backward': ['s'],                
-            'left': ['a'],                 
-            'right': ['d'],                 
-            'jump': ['space'],            
-            'dodge/sprint': ['shift'],             
-            'dodge/sprint_forward': ['w', 'shift'],       
-            'dodge/sprint_backward': ['s', 'shift'],        
-            'dodge/sprint_left': ['a', 'shift'],       
-            'dodge/sprint_right': ['d', 'shift'],       
-            'interact': ['e'],                
-            'left_click': ['left'],              
-            'right_click': ['right'],             
-            'middle_click': ['middle'],            
-            'use_item': ['r'],            
+            0: [],                    
+            1: [['W'], 500, 0],                 
+            2: [['S'], 500, 0],                
+            3: [['A'], 500, 0],                 
+            4: [['D'], 500, 0],                 
+            5: [['SPACE'], 500, 0],            
+            6: [['W', 'LEFT_SHIFT'], 100, 200],       
+            7: [['S', 'LEFT_SHIFT'], 100, 200],        
+            8: [['A', 'LEFT_SHIFT'], 100, 200],       
+            9: [['D', 'LEFT_SHIFT'], 100, 200],       
+            10: [['E'], 500, 0],                
+            11: [['LEFT_ALT', 'LEFT'], 400, 0],        
+            12: [['R'], 500, 0],            
         }
     
     def reset(self, seed=None, options=None):
@@ -80,17 +93,24 @@ class EldenGymEnv(gym.Env):
     def step(self, action):
         # Send keys to server
         keys = self.action_map[action]
-        self.client.send_keys(keys)
+        if keys != []:
+            self.client.send_key(*keys)
+        else:
+            sleep(0.5)
         
         # Get new state
         obs = self._get_observation()
-        
+        info = self._get_info()
+
         # Calculate reward using user's function
         reward = self.reward_fn.calculate(obs, info, self._prev_info)
         
         # Check termination using user's function
         terminated = self.reward_fn.is_done(obs, info)
         truncated = False
+
+        # Update previous info
+        self._prev_info = info.copy()
         
         return obs, reward, terminated, truncated, info
     
@@ -106,6 +126,10 @@ class EldenGymEnv(gym.Env):
             'player_animation': self.client.player_animation_id,    
         }
     
+    def _get_info(self):
+        return {
+            'player_hp': self.client.player_hp,
+        }
     
     def close(self):
         self.client.close()

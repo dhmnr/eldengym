@@ -1,5 +1,6 @@
 from .siphon_client import SiphonClient
 import numpy as np
+from time import sleep
 
 class EldenClient(SiphonClient):
     """
@@ -87,9 +88,9 @@ class EldenClient(SiphonClient):
         """
         Get the location of the target.
         """
-        local_x = self.get_attribute('TargetLocalPosX')
-        local_y = self.get_attribute('TargetLocalPosY')
-        local_z = self.get_attribute('TargetLocalPosZ')
+        local_x = self.get_attribute('NpcLocalPosX')
+        local_y = self.get_attribute('NpcLocalPosY')
+        local_z = self.get_attribute('NpcLocalPosZ')
         return local_x, local_y, local_z
     
     @property
@@ -97,9 +98,9 @@ class EldenClient(SiphonClient):
         """
         Get the location of the target.
         """
-        global_x = self.get_attribute('TargetGlobalPosX')
-        global_y = self.get_attribute('TargetGlobalPosY')
-        global_z = self.get_attribute('TargetGlobalPosZ')
+        global_x = self.get_attribute('NpcGlobalPosX')
+        global_y = self.get_attribute('NpcGlobalPosY')
+        global_z = self.get_attribute('NpcGlobalPosZ')
         return global_x, global_y, global_z
     
     @property
@@ -116,8 +117,8 @@ class EldenClient(SiphonClient):
         """
         Get the distance between the player and the target.
         """
-        player_x, player_y, player_z = self.global_player_coords()
-        target_x, target_y, target_z = self.global_target_coords()
+        player_x, player_y, player_z = self.global_player_coords
+        target_x, target_y, target_z = self.global_target_coords
         return np.linalg.norm([player_x - target_x, player_y - target_y, player_z - target_z])
 
     def teleport(self, x, y, z):
@@ -125,8 +126,8 @@ class EldenClient(SiphonClient):
         Teleport the player to the given coordinates.
         """
         # FIXME: Close range teleport, need to check MapId for long range teleport.
-        local_x, local_y, local_z = self.get_local_coords()
-        global_x, global_y, global_z = self.get_global_coords()
+        local_x, local_y, local_z = self.local_player_coords
+        global_x, global_y, global_z = self.global_player_coords
         self.set_attribute('HeroLocalPosX', local_x + (x - global_x))
         self.set_attribute('HeroLocalPosY', local_y + (y - global_y))
         self.set_attribute('HeroLocalPosZ', local_z + (z - global_z))
@@ -145,5 +146,12 @@ class EldenClient(SiphonClient):
         # FIXME: This is a hack to start boss fight. Need to check fogwall state. or use another method.
         x,y,z = self.scenarios[scenario_name]['fog_wall_location']
         self.teleport(x, y, z)
-        self.send_key('W', 200)   
-        self.send_key('E', 200)
+        self.move_mouse(1000, 0, 1)
+        sleep(2)
+        self.send_key(['W','E'], 200, 200)
+        sleep(2)
+        self.send_key(['B'], 200)
+
+
+
+        
