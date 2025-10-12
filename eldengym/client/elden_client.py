@@ -11,7 +11,7 @@ class EldenClient(SiphonClient):
         self.scenarios = {
             'margit': {
                 'boss_name': 'Margit',
-                'fog_wall_location': (19.958229064941406, -7.051832675933838, -11.990748405456543),
+                'fog_wall_location': (19.958229064941406, -11.990748405456543, -7.051832675933838),
             }
         }
     ## =========== Player methods ===========
@@ -117,7 +117,7 @@ class EldenClient(SiphonClient):
         """
         Get the distance between the player and the target.
         """
-        player_x, player_y, player_z = self.global_player_coords
+        player_x, player_y, player_z = self.local_player_coords
         target_x, target_y, target_z = self.global_target_coords
         return np.linalg.norm([player_x - target_x, player_y - target_y, player_z - target_z])
 
@@ -131,6 +131,13 @@ class EldenClient(SiphonClient):
         self.set_attribute('HeroLocalPosX', local_x + (x - global_x))
         self.set_attribute('HeroLocalPosY', local_y + (y - global_y))
         self.set_attribute('HeroLocalPosZ', local_z + (z - global_z))
+
+    def set_game_speed(self, speed):
+        """
+        Set the game speed.
+        """
+        self.set_attribute('gameSpeedFlag', True)
+        self.set_attribute('gameSpeedVal', speed)
 
     def reset_game(self):
         """

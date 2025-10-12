@@ -5,22 +5,26 @@ from .rewards import RewardFunction, ScoreDeltaReward
 from time import sleep
 
 class EldenGymEnv(gym.Env):
-    metadata = {'render_modes': ['human', 'rgb_array']}
     
     def __init__(
         self,
         scenario_name='margit',
         host='localhost:50051',
         reward_fn=None,
+        action_level='raw', # ['raw', 'semantic']
         action_map=None,
-        render_mode=None
+        stepping_logic='fixed', # ['fixed', 'dynamic']
+        time_step=0.01,
+        freeze_game_speed=1e-5
     ):
         super().__init__()
         
         self.scenario_name = scenario_name
         self.client = EldenClient(host)
-        self.render_mode = render_mode
-        
+        self.action_level = action_level
+        self.stepping_logic = stepping_logic
+        self.time_step = time_step
+        self.freeze_game_speed = freeze_game_speed
         # Reward function (user-provided or default)
         self.reward_fn = reward_fn or ScoreDeltaReward(score_key='player_hp')
         if not isinstance(self.reward_fn, RewardFunction):
@@ -39,7 +43,7 @@ class EldenGymEnv(gym.Env):
         # State tracking
         self._prev_info = None
         self._current_frame = None
-    
+
     def action_to_index(self, action):
         return {
             'no-op': 0, 
@@ -76,7 +80,7 @@ class EldenGymEnv(gym.Env):
     
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        
+        self.client.set_game_speed(self.time_step)
         self.client.reset_game()
         self.client.start_scenario(self.scenario_name)
         sleep(1) # FIXME: This is a hack to wait for the fight to start.
@@ -87,17 +91,20 @@ class EldenGymEnv(gym.Env):
         
         info = self._get_info()
         self._prev_info = info.copy()
+        self.client.set_game_speed(self.freeze_game_speed)
+
         
         return obs, info
     
     def step(self, action):
         # Send keys to server
         keys = self.action_map[action]
+        self.client.set_game_speed(self.time_step)
+        sleep(0.01)
         if keys != []:
             self.client.send_key(*keys)
-        else:
-            sleep(0.5)
-        
+        sleep(self.time_step)
+        self.client.set_game_speed(self.freeze_game_speed)
         # Get new state
         obs = self._get_observation()
         info = self._get_info()
@@ -111,6 +118,7 @@ class EldenGymEnv(gym.Env):
 
         # Update previous info
         self._prev_info = info.copy()
+
         
         return obs, reward, terminated, truncated, info
     
