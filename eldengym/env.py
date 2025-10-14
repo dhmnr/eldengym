@@ -10,33 +10,40 @@ class EldenGymEnv(gym.Env):
         self,
         scenario_name='margit',
         host='localhost:50051',
-        reward_fn=None,
-        action_level='raw', # ['raw', 'semantic']
+        action_mode='discrete', # ['discrete', 'multi_binary']
+        action_persistence=True,
         action_map=None,
-        stepping_logic='fixed', # ['fixed', 'dynamic']
-        time_step=0.01,
-        freeze_game_speed=1e-5
+        stepping_frequency=5, # in Hz
+        reward_function=None,
+        freeze_min_game_speed=1e-5 # Zero breaks game
     ):
         super().__init__()
-        
+
         self.scenario_name = scenario_name
         self.client = EldenClient(host)
-        self.action_level = action_level
-        self.stepping_logic = stepping_logic
-        self.time_step = time_step
-        self.freeze_game_speed = freeze_game_speed
+        self.action_mode = action_mode
+        self.action_persistence = action_persistence
+        self.stepping_frequency = stepping_frequency
+        self.time_step = 1 / stepping_frequency
+        self.freeze_min_game_speed = freeze_min_game_speed
+
         # Reward function (user-provided or default)
-        self.reward_fn = reward_fn or ScoreDeltaReward(score_key='player_hp')
-        if not isinstance(self.reward_fn, RewardFunction):
+        self.reward_function = reward_function or ScoreDeltaReward(score_key='player_hp')
+        if not isinstance(self.reward_function, RewardFunction):
             raise TypeError("reward_fn must inherit from RewardFunction")
         
-        # Action mapping (keyboard keys per action)
-        self.action_map = action_map or self._default_action_map()
+        # Actions mapping and space
+        if action_mode == 'discrete':
+            self.action_map = self._discrete_action_map()
+            self.action_space = gym.spaces.Discrete(len(self.action_map))
+        elif action_mode == 'multi_binary':
+            self.action_map = self._multi_binary_action_map()
+            self.action_space = gym.spaces.MultiBinary(len(self.action_map))
+        else:
+            raise ValueError(f"Invalid action mode: {action_mode}")
         
-        # Define spaces
-        self.action_space = gym.spaces.Discrete(len(self.action_map))
         
-        # Observation space (will be set on first reset)
+        # Observation space 
         self._obs_shape = None
         self.observation_space = None
         
@@ -44,23 +51,39 @@ class EldenGymEnv(gym.Env):
         self._prev_info = None
         self._current_frame = None
 
-    def action_to_index(self, action):
+    def discrete_action_label(self, action):
         return {
-            'no-op': 0, 
-            'forward': 1, 
-            'backward': 2, 
-            'left': 3, 
-            'right': 4, 
-            'jump': 5, 
-            'dodge_forward': 6, 
-            'dodge_backward': 7, 
-            'dodge_left': 8, 
-            'dodge_right': 9, 
-            'interact': 10, 
-            'attack': 11, 
-            'use_item': 12}
+            0: 'no-op',
+            1: 'forward', 
+            2: 'backward',
+            3: 'left',
+            4: 'right',
+            5: 'jump', 
+            6: 'dodge_forward', 
+            7: 'dodge_backward', 
+            8: 'dodge_left', 
+            9: 'dodge_right', 
+            10: 'interact', 
+            11: 'attack', 
+            12: 'use_item'}
     
-    def _default_action_map(self):
+    def _multi_binary_action_map(self):
+        return {
+            0: '',
+            1: 'W',
+            2: 'A',
+            3: 'S',
+            4: 'D',
+            5: 'SPACE',
+            6: 'LEFT_SHIFT',
+            7: 'E',
+            8: 'LEFT_ALT',
+            9: 'R',
+            10: 'LEFT'
+            11: 'F',
+        }
+
+    def _discrete_action_map(self):
         """Default keyboard action mapping"""
         return {
             0: [],                    
@@ -80,7 +103,7 @@ class EldenGymEnv(gym.Env):
     
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        self.client.set_game_speed(self.time_step)
+        self.client.set_game_speed(1.0)
         self.client.reset_game()
         self.client.start_scenario(self.scenario_name)
         sleep(1) # FIXME: This is a hack to wait for the fight to start.
@@ -91,39 +114,44 @@ class EldenGymEnv(gym.Env):
         
         info = self._get_info()
         self._prev_info = info.copy()
-        self.client.set_game_speed(self.freeze_game_speed)
+        self.client.set_game_speed(self.freeze_min_game_speed)
 
         
         return obs, info
     
     def step(self, action):
-        # Send keys to server
-        keys = self.action_map[action]
-        self.client.set_game_speed(self.time_step)
-        sleep(0.01)
-        if keys != []:
-            self.client.send_key(*keys)
-        sleep(self.time_step)
-        self.client.set_game_speed(self.freeze_game_speed)
-        # Get new state
+        # Send actions to server
+        # TODO: Implement action persistence
+        if self.action_mode == 'discrete':
+            keys = self.action_map[action]
+            self.client.set_game_speed(1.0)
+            sleep(0.001)
+            if keys != []:
+                self.client.send_key(*keys)
+            sleep(self.time_step)
+            self.client.set_game_speed(self.freeze_min_game_speed)
+        elif self.action_mode == 'multi_binary':
+            # TODO: Implement multi-binary action
+            pass
+        
+        # new state
         obs = self._get_observation()
         info = self._get_info()
 
-        # Calculate reward using user's function
-        reward = self.reward_fn.calculate(obs, info, self._prev_info)
+        # Calculate reward 
+        reward = self.reward_function.calculate(obs, info, self._prev_info)
         
-        # Check termination using user's function
-        terminated = self.reward_fn.is_done(obs, info)
+        # Check termination 
+        terminated = self.reward_function.is_done(obs, info)
         truncated = False
 
         # Update previous info
         self._prev_info = info.copy()
-
         
         return obs, reward, terminated, truncated, info
     
     def _get_observation(self):
-        """Get processed frame from server"""
+        """Get observation from server"""
         frame = self.client.get_frame()
         return {
             'frame': frame,
