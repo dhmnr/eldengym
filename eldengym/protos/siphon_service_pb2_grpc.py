@@ -45,10 +45,15 @@ class SiphonServiceStub(object):
                 request_serializer=siphon__service__pb2.SetSiphonRequest.SerializeToString,
                 response_deserializer=siphon__service__pb2.SetSiphonResponse.FromString,
                 _registered_method=True)
-        self.InputKey = channel.unary_unary(
-                '/siphon_service.SiphonService/InputKey',
-                request_serializer=siphon__service__pb2.InputKeyRequest.SerializeToString,
-                response_deserializer=siphon__service__pb2.InputKeyResponse.FromString,
+        self.InputKeyTap = channel.unary_unary(
+                '/siphon_service.SiphonService/InputKeyTap',
+                request_serializer=siphon__service__pb2.InputKeyTapRequest.SerializeToString,
+                response_deserializer=siphon__service__pb2.InputKeyTapResponse.FromString,
+                _registered_method=True)
+        self.InputKeyToggle = channel.unary_unary(
+                '/siphon_service.SiphonService/InputKeyToggle',
+                request_serializer=siphon__service__pb2.InputKeyToggleRequest.SerializeToString,
+                response_deserializer=siphon__service__pb2.InputKeyToggleResponse.FromString,
                 _registered_method=True)
         self.MoveMouse = channel.unary_unary(
                 '/siphon_service.SiphonService/MoveMouse',
@@ -59,6 +64,11 @@ class SiphonServiceStub(object):
                 '/siphon_service.SiphonService/CaptureFrame',
                 request_serializer=siphon__service__pb2.CaptureFrameRequest.SerializeToString,
                 response_deserializer=siphon__service__pb2.CaptureFrameResponse.FromString,
+                _registered_method=True)
+        self.ExecuteCommand = channel.unary_unary(
+                '/siphon_service.SiphonService/ExecuteCommand',
+                request_serializer=siphon__service__pb2.ExecuteCommandRequest.SerializeToString,
+                response_deserializer=siphon__service__pb2.ExecuteCommandResponse.FromString,
                 _registered_method=True)
 
 
@@ -80,9 +90,15 @@ class SiphonServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def InputKey(self, request, context):
+    def InputKeyTap(self, request, context):
         """Input a key
         """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def InputKeyToggle(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -101,6 +117,13 @@ class SiphonServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ExecuteCommand(self, request, context):
+        """Execute a command on the remote system
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_SiphonServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -114,10 +137,15 @@ def add_SiphonServiceServicer_to_server(servicer, server):
                     request_deserializer=siphon__service__pb2.SetSiphonRequest.FromString,
                     response_serializer=siphon__service__pb2.SetSiphonResponse.SerializeToString,
             ),
-            'InputKey': grpc.unary_unary_rpc_method_handler(
-                    servicer.InputKey,
-                    request_deserializer=siphon__service__pb2.InputKeyRequest.FromString,
-                    response_serializer=siphon__service__pb2.InputKeyResponse.SerializeToString,
+            'InputKeyTap': grpc.unary_unary_rpc_method_handler(
+                    servicer.InputKeyTap,
+                    request_deserializer=siphon__service__pb2.InputKeyTapRequest.FromString,
+                    response_serializer=siphon__service__pb2.InputKeyTapResponse.SerializeToString,
+            ),
+            'InputKeyToggle': grpc.unary_unary_rpc_method_handler(
+                    servicer.InputKeyToggle,
+                    request_deserializer=siphon__service__pb2.InputKeyToggleRequest.FromString,
+                    response_serializer=siphon__service__pb2.InputKeyToggleResponse.SerializeToString,
             ),
             'MoveMouse': grpc.unary_unary_rpc_method_handler(
                     servicer.MoveMouse,
@@ -128,6 +156,11 @@ def add_SiphonServiceServicer_to_server(servicer, server):
                     servicer.CaptureFrame,
                     request_deserializer=siphon__service__pb2.CaptureFrameRequest.FromString,
                     response_serializer=siphon__service__pb2.CaptureFrameResponse.SerializeToString,
+            ),
+            'ExecuteCommand': grpc.unary_unary_rpc_method_handler(
+                    servicer.ExecuteCommand,
+                    request_deserializer=siphon__service__pb2.ExecuteCommandRequest.FromString,
+                    response_serializer=siphon__service__pb2.ExecuteCommandResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -196,7 +229,7 @@ class SiphonService(object):
             _registered_method=True)
 
     @staticmethod
-    def InputKey(request,
+    def InputKeyTap(request,
             target,
             options=(),
             channel_credentials=None,
@@ -209,9 +242,36 @@ class SiphonService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/siphon_service.SiphonService/InputKey',
-            siphon__service__pb2.InputKeyRequest.SerializeToString,
-            siphon__service__pb2.InputKeyResponse.FromString,
+            '/siphon_service.SiphonService/InputKeyTap',
+            siphon__service__pb2.InputKeyTapRequest.SerializeToString,
+            siphon__service__pb2.InputKeyTapResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def InputKeyToggle(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/siphon_service.SiphonService/InputKeyToggle',
+            siphon__service__pb2.InputKeyToggleRequest.SerializeToString,
+            siphon__service__pb2.InputKeyToggleResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -266,6 +326,33 @@ class SiphonService(object):
             '/siphon_service.SiphonService/CaptureFrame',
             siphon__service__pb2.CaptureFrameRequest.SerializeToString,
             siphon__service__pb2.CaptureFrameResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ExecuteCommand(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/siphon_service.SiphonService/ExecuteCommand',
+            siphon__service__pb2.ExecuteCommandRequest.SerializeToString,
+            siphon__service__pb2.ExecuteCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,

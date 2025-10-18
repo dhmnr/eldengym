@@ -11,7 +11,8 @@ service SiphonService {
   rpc SetAttribute(SetSiphonRequest) returns (SetSiphonResponse);
 
   // Input a key
-  rpc InputKey(InputKeyRequest) returns (InputKeyResponse);
+  rpc InputKeyTap(InputKeyTapRequest) returns (InputKeyTapResponse);
+  rpc InputKeyToggle(InputKeyToggleRequest) returns (InputKeyToggleResponse);
 
   // Move mouse
   rpc MoveMouse(MoveMouseRequest) returns (MoveMouseResponse);
@@ -19,6 +20,9 @@ service SiphonService {
 
   // Capture a frame
   rpc CaptureFrame(CaptureFrameRequest) returns (CaptureFrameResponse);
+
+  // Execute a command on the remote system
+  rpc ExecuteCommand(ExecuteCommandRequest) returns (ExecuteCommandResponse);
 }
 
 // Request message for getting variable
@@ -59,18 +63,28 @@ message SetSiphonResponse {
 }
 
 // Request message for inputting a key
-message InputKeyRequest {
+message InputKeyTapRequest {
   repeated string keys = 1;
   int32 hold_ms = 2;
   int32 delay_ms = 3;
-
 }
 
 // Response message for inputting a key
-message InputKeyResponse {
+message InputKeyTapResponse {
   bool success = 1;
   string message = 2;
 }
+
+message InputKeyToggleRequest {
+  string key = 1;
+  bool toggle = 2;
+}
+
+message InputKeyToggleResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 
 // Request message for moving mouse
 message MoveMouseRequest {
@@ -97,4 +111,23 @@ message CaptureFrameResponse {
   int32 height = 3;
   bool success = 4;
   string message = 5;
+}
+
+// Request message for executing a command
+message ExecuteCommandRequest {
+  string command = 1;
+  repeated string args = 2;
+  string working_directory = 3;
+  int32 timeout_seconds = 4;
+  bool capture_output = 5;
+}
+
+// Response message for executing a command
+message ExecuteCommandResponse {
+  bool success = 1;
+  string message = 2;
+  int32 exit_code = 3;
+  string stdout_output = 4;
+  string stderr_output = 5;
+  int32 execution_time_ms = 6;
 }

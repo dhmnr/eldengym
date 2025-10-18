@@ -32,8 +32,8 @@ class SiphonClient:
             hold_time: string, time to hold the key in milliseconds
             delay_time: string, time to delay between keys in milliseconds
         """
-        request = siphon_service_pb2.InputKeyRequest(keys=keys, hold_ms=hold_time, delay_ms=delay_time)
-        return self.stub.InputKey(request)
+        request = siphon_service_pb2.InputKeyTapRequest(keys=keys, hold_ms=hold_time, delay_ms=delay_time)
+        return self.stub.InputKeyTap(request)
     
     def get_attribute(self, attributeName):
         """
