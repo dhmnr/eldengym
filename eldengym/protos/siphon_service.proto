@@ -23,6 +23,13 @@ service SiphonService {
 
   // Execute a command on the remote system
   rpc ExecuteCommand(ExecuteCommandRequest) returns (ExecuteCommandResponse);
+
+  // Configuration and initialization endpoints
+  rpc SetProcessConfig(SetProcessConfigRequest) returns (SetProcessConfigResponse);
+  rpc InitializeMemory(InitializeMemoryRequest) returns (InitializeMemoryResponse);
+  rpc InitializeInput(InitializeInputRequest) returns (InitializeInputResponse);
+  rpc InitializeCapture(InitializeCaptureRequest) returns (InitializeCaptureResponse);
+  rpc GetServerStatus(GetServerStatusRequest) returns (GetServerStatusResponse);
 }
 
 // Request message for getting variable
@@ -130,4 +137,83 @@ message ExecuteCommandResponse {
   string stdout_output = 4;
   string stderr_output = 5;
   int32 execution_time_ms = 6;
+}
+
+// Process attribute definition for configuration
+message ProcessAttributeProto {
+  string name = 1;
+  string pattern = 2;
+  repeated uint64 offsets = 3;
+  string type = 4;
+  uint64 length = 5;
+  string method = 6;
+}
+
+// Request message for setting process configuration
+message SetProcessConfigRequest {
+  string process_name = 1;
+  string process_window_name = 2;
+  repeated ProcessAttributeProto attributes = 3;
+}
+
+// Response message for setting process configuration
+message SetProcessConfigResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Request message for initializing memory
+message InitializeMemoryRequest {
+  // Empty - uses config from SetProcessConfig
+}
+
+// Response message for initializing memory
+message InitializeMemoryResponse {
+  bool success = 1;
+  string message = 2;
+  int32 process_id = 3;
+}
+
+// Request message for initializing input
+message InitializeInputRequest {
+  // Can optionally override window name
+  string window_name = 1;
+}
+
+// Response message for initializing input
+message InitializeInputResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Request message for initializing capture
+message InitializeCaptureRequest {
+  // Can optionally override window name
+  string window_name = 1;
+}
+
+// Response message for initializing capture
+message InitializeCaptureResponse {
+  bool success = 1;
+  string message = 2;
+  int32 window_width = 3;
+  int32 window_height = 4;
+}
+
+// Request message for getting server status
+message GetServerStatusRequest {
+  // Empty
+}
+
+// Response message for getting server status
+message GetServerStatusResponse {
+  bool success = 1;
+  string message = 2;
+  bool memory_initialized = 3;
+  bool input_initialized = 4;
+  bool capture_initialized = 5;
+  bool config_set = 6;
+  string process_name = 7;
+  string window_name = 8;
+  int32 process_id = 9;
 }

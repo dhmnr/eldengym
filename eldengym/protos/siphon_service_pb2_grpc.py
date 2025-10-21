@@ -79,6 +79,36 @@ class SiphonServiceStub(object):
             response_deserializer=siphon__service__pb2.ExecuteCommandResponse.FromString,
             _registered_method=True,
         )
+        self.SetProcessConfig = channel.unary_unary(
+            "/siphon_service.SiphonService/SetProcessConfig",
+            request_serializer=siphon__service__pb2.SetProcessConfigRequest.SerializeToString,
+            response_deserializer=siphon__service__pb2.SetProcessConfigResponse.FromString,
+            _registered_method=True,
+        )
+        self.InitializeMemory = channel.unary_unary(
+            "/siphon_service.SiphonService/InitializeMemory",
+            request_serializer=siphon__service__pb2.InitializeMemoryRequest.SerializeToString,
+            response_deserializer=siphon__service__pb2.InitializeMemoryResponse.FromString,
+            _registered_method=True,
+        )
+        self.InitializeInput = channel.unary_unary(
+            "/siphon_service.SiphonService/InitializeInput",
+            request_serializer=siphon__service__pb2.InitializeInputRequest.SerializeToString,
+            response_deserializer=siphon__service__pb2.InitializeInputResponse.FromString,
+            _registered_method=True,
+        )
+        self.InitializeCapture = channel.unary_unary(
+            "/siphon_service.SiphonService/InitializeCapture",
+            request_serializer=siphon__service__pb2.InitializeCaptureRequest.SerializeToString,
+            response_deserializer=siphon__service__pb2.InitializeCaptureResponse.FromString,
+            _registered_method=True,
+        )
+        self.GetServerStatus = channel.unary_unary(
+            "/siphon_service.SiphonService/GetServerStatus",
+            request_serializer=siphon__service__pb2.GetServerStatusRequest.SerializeToString,
+            response_deserializer=siphon__service__pb2.GetServerStatusResponse.FromString,
+            _registered_method=True,
+        )
 
 
 class SiphonServiceServicer(object):
@@ -126,6 +156,36 @@ class SiphonServiceServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def SetProcessConfig(self, request, context):
+        """Configuration and initialization endpoints"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def InitializeMemory(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def InitializeInput(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def InitializeCapture(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def GetServerStatus(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
 
 def add_SiphonServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -163,6 +223,31 @@ def add_SiphonServiceServicer_to_server(servicer, server):
             servicer.ExecuteCommand,
             request_deserializer=siphon__service__pb2.ExecuteCommandRequest.FromString,
             response_serializer=siphon__service__pb2.ExecuteCommandResponse.SerializeToString,
+        ),
+        "SetProcessConfig": grpc.unary_unary_rpc_method_handler(
+            servicer.SetProcessConfig,
+            request_deserializer=siphon__service__pb2.SetProcessConfigRequest.FromString,
+            response_serializer=siphon__service__pb2.SetProcessConfigResponse.SerializeToString,
+        ),
+        "InitializeMemory": grpc.unary_unary_rpc_method_handler(
+            servicer.InitializeMemory,
+            request_deserializer=siphon__service__pb2.InitializeMemoryRequest.FromString,
+            response_serializer=siphon__service__pb2.InitializeMemoryResponse.SerializeToString,
+        ),
+        "InitializeInput": grpc.unary_unary_rpc_method_handler(
+            servicer.InitializeInput,
+            request_deserializer=siphon__service__pb2.InitializeInputRequest.FromString,
+            response_serializer=siphon__service__pb2.InitializeInputResponse.SerializeToString,
+        ),
+        "InitializeCapture": grpc.unary_unary_rpc_method_handler(
+            servicer.InitializeCapture,
+            request_deserializer=siphon__service__pb2.InitializeCaptureRequest.FromString,
+            response_serializer=siphon__service__pb2.InitializeCaptureResponse.SerializeToString,
+        ),
+        "GetServerStatus": grpc.unary_unary_rpc_method_handler(
+            servicer.GetServerStatus,
+            request_deserializer=siphon__service__pb2.GetServerStatusRequest.FromString,
+            response_serializer=siphon__service__pb2.GetServerStatusResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -377,6 +462,156 @@ class SiphonService(object):
             "/siphon_service.SiphonService/ExecuteCommand",
             siphon__service__pb2.ExecuteCommandRequest.SerializeToString,
             siphon__service__pb2.ExecuteCommandResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def SetProcessConfig(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/siphon_service.SiphonService/SetProcessConfig",
+            siphon__service__pb2.SetProcessConfigRequest.SerializeToString,
+            siphon__service__pb2.SetProcessConfigResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def InitializeMemory(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/siphon_service.SiphonService/InitializeMemory",
+            siphon__service__pb2.InitializeMemoryRequest.SerializeToString,
+            siphon__service__pb2.InitializeMemoryResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def InitializeInput(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/siphon_service.SiphonService/InitializeInput",
+            siphon__service__pb2.InitializeInputRequest.SerializeToString,
+            siphon__service__pb2.InitializeInputResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def InitializeCapture(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/siphon_service.SiphonService/InitializeCapture",
+            siphon__service__pb2.InitializeCaptureRequest.SerializeToString,
+            siphon__service__pb2.InitializeCaptureResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def GetServerStatus(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/siphon_service.SiphonService/GetServerStatus",
+            siphon__service__pb2.GetServerStatusRequest.SerializeToString,
+            siphon__service__pb2.GetServerStatusResponse.FromString,
             options,
             channel_credentials,
             insecure,
