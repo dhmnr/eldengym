@@ -93,6 +93,10 @@ class EldenGymEnv(gym.Env):
         self._prev_info = None
         self._last_animation_id = None
 
+        self.download_savefile()
+        self.launch_game()
+        self.bypass_menu()
+
     def _multi_binary_action_map(self):
         """
         Multi-binary action mapping - OpenAI Five style.
@@ -281,6 +285,21 @@ class EldenGymEnv(gym.Env):
             "player_hp": self.client.player_hp,
             "boss_hp": self.client.target_hp,
         }
+
+    def download_savefile(self):
+        """Download the savefile from the internet"""
+        # TODO: Implement this
+        pass
+
+    def launch_game(self):
+        """Launch the game"""
+        # TODO: Implement this
+        pass
+
+    def bypass_menu(self):
+        """Bypass the menu"""
+        # TODO: Implement this
+        pass
 
     def close(self):
         """
