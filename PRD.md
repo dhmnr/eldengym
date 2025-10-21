@@ -10,7 +10,7 @@ env = EldenRingEnv(
     timestep_ms=200
 )
 ```
-Multi-binary 
+Multi-binary
 ```
 env = EldenRingEnv(
     game_interface=game,
@@ -35,12 +35,12 @@ env = EldenRingEnv(
 observation_space = gym.spaces.Dict({
     # Visual
     'frame': Box(low=0, high=255, shape=(84, 84, 3), dtype=uint8),
-    
+
     # Game State
     'player_hp': Box(low=0, high=1, shape=(1,), dtype=float32),
     'boss_hp': Box(low=0, high=1, shape=(1,), dtype=float32),
     'distance': Box(low=0, high=20, shape=(1,), dtype=float32),
-    
+
     # Animation States
     'player_animation': Discrete(100),  # Animation ID
     'boss_animation': Discrete(200),
@@ -55,7 +55,7 @@ Optional:
  - Cropped/scaled/stacked(temporal)
  - Custom resolution
 
-## Reward function 
+## Reward function
  - Base reward function
  - Overriddeble by curriculum wrapper/etc
 
@@ -81,7 +81,5 @@ info = {
 ## Performance Requirements
 TBD
 
-## Vectorized Env support 
+## Vectorized Env support
 TBD
-
-

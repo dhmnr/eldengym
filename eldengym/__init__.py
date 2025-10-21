@@ -11,11 +11,11 @@ __version__ = "0.1.0"
 __all__ = [
     "SiphonClient",
     "EldenClient",
-    "EldenGymEnv", 
+    "EldenGymEnv",
     "RewardFunction",
     "ScoreDeltaReward",
     "CustomReward",
     "FrameStack",
-    "ResizeFrame", 
-    "GrayscaleFrame"
+    "ResizeFrame",
+    "GrayscaleFrame",
 ]

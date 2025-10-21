@@ -6,7 +6,7 @@ package siphon_service;
 service SiphonService {
   // Get the current value of the variable
   rpc GetAttribute(GetSiphonRequest) returns (GetSiphonResponse);
-  
+
   // Set the value of the variable
   rpc SetAttribute(SetSiphonRequest) returns (SetSiphonResponse);
 
@@ -35,7 +35,7 @@ message GetSiphonRequest {
 message GetSiphonResponse {
   bool success = 1;
   string message = 2;
-  
+
   oneof value {
     int32 int_value = 3;
     float float_value = 4;
@@ -47,7 +47,7 @@ message GetSiphonResponse {
 // Request message for setting variable
 message SetSiphonRequest {
   string attributeName = 1;
-  
+
   oneof value {
     int32 int_value = 2;
     float float_value = 3;
