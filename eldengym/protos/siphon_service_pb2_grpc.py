@@ -3,7 +3,7 @@
 
 import grpc
 
-import siphon_service_pb2 as siphon__service__pb2
+from . import siphon_service_pb2 as siphon__service__pb2
 
 GRPC_GENERATED_VERSION = "1.75.1"
 GRPC_VERSION = grpc.__version__
