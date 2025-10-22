@@ -1,7 +1,8 @@
 # EldenGym 🎮
 
+[![PyPI version](https://badge.fury.io/py/eldengym.svg)](https://pypi.org/project/eldengym/)
 [![Tests](https://github.com/dhmnr/eldengym/actions/workflows/test.yml/badge.svg)](https://github.com/dhmnr/eldengym/actions/workflows/test.yml)
-[![Documentation](https://img.shields.io/badge/docs-cloudflare%20pages-orange)](https://eldengym-docs.pages.dev/)
+[![Documentation](https://img.shields.io/badge/docs-cloudflare%20pages-orange)](https://eldengym.dhmnr.sh/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -39,14 +40,22 @@ env.close()
 
 ## 📚 Documentation
 
-**[Read the full documentation →](https://eldengym-docs.pages.dev/)**
+**[Read the full documentation →](https://eldengym.dhmnr.sh/)**
 
-- [Installation Guide](https://eldengym-docs.pages.dev/getting-started/installation/)
-- [Quick Start Tutorial](https://eldengym-docs.pages.dev/getting-started/quickstart/)
-- [API Reference](https://eldengym-docs.pages.dev/api/env/)
-- [Examples](https://eldengym-docs.pages.dev/examples/random_policy/)
+- [Installation Guide](https://eldengym.dhmnr.sh/getting-started/installation/)
+- [Quick Start Tutorial](https://eldengym.dhmnr.sh/getting-started/quickstart/)
+- [API Reference](https://eldengym.dhmnr.sh/api/env/)
+- [Examples](https://eldengym.dhmnr.sh/examples/random_policy/)
 
 ## 🔧 Installation
+
+### From PyPI (Stable Release)
+
+```bash
+pip install eldengym
+```
+
+### From Source (Development)
 
 ```bash
 # Clone repository
@@ -117,7 +126,7 @@ uv run mkdocs serve
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see our [Contributing Guide](https://eldengym-docs.pages.dev/development/contributing/).
+Contributions are welcome! Please see our [Contributing Guide](https://eldengym.dhmnr.sh/development/contributing/).
 
 ## 📝 License
 
