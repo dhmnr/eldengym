@@ -85,7 +85,7 @@ If you use EldenGym in your research, please cite:
   title = {EldenGym: A Gymnasium Environment for Elden Ring},
   author = {Your Name},
   year = {2025},
-  url = {https://github.com/yourusername/eldengym}
+  url = {https://github.com/dhmnr/eldengym}
 }
 ```
 

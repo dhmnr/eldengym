@@ -1,10 +1,10 @@
 site_name: EldenGym Documentation
 site_description: A Gymnasium environment for Elden Ring reinforcement learning
 site_author: EldenGym Team
-site_url: https://eldengym.readthedocs.io
+site_url: https://dhmnr.github.io/eldengym/
 
-repo_name: eldengym
-repo_url: https://github.com/yourusername/eldengym
+repo_name: dhmnr/eldengym
+repo_url: https://github.com/dhmnr/eldengym
 edit_uri: edit/main/docs/
 
 theme:
@@ -96,6 +96,6 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yourusername/eldengym
+      link: https://github.com/dhmnr/eldengym
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/eldengym/

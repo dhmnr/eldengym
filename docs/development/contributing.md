@@ -8,7 +8,7 @@ Thank you for your interest in contributing to EldenGym!
 
 ```bash
 # Fork on GitHub, then clone
-git clone https://github.com/yourusername/eldengym.git
+git clone https://github.com/dhmnr/eldengym.git
 cd eldengym
 ```
 

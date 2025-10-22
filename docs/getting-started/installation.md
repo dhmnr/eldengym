@@ -13,7 +13,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/eldengym.git
+git clone https://github.com/dhmnr/eldengym.git
 cd eldengym
 
 # Install with uv
@@ -24,7 +24,7 @@ uv sync
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/eldengym.git
+git clone https://github.com/dhmnr/eldengym.git
 cd eldengym
 
 # Install in development mode
