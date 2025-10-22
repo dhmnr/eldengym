@@ -1,5 +1,6 @@
 # EldenGym 🎮
 
+[![Tests](https://github.com/dhmnr/eldengym/actions/workflows/test.yml/badge.svg)](https://github.com/dhmnr/eldengym/actions/workflows/test.yml)
 [![Documentation](https://img.shields.io/badge/docs-cloudflare%20pages-orange)](https://eldengym-docs.pages.dev/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -95,7 +96,10 @@ Check out the [examples](examples/) directory:
 
 ```bash
 # Install dev dependencies
-uv sync --group dev --group docs
+uv sync --group dev --group test --group docs
+
+# Run tests
+uv run pytest
 
 # Format code
 uv run ruff format .
