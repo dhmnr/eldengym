@@ -44,10 +44,10 @@ The workflow will automatically create the `gh-pages` branch on first run.
 
 After the workflow runs successfully, your docs will be available at:
 ```
-https://dhmnr.github.io/eldengym/
+https://eldengym-docs.pages.dev/
 ```
 
-Replace `dhmnr` with your actual GitHub username.
+Or at your custom domain once configured (e.g., `docs.dhmnr.sh`).
 
 ## Manual Deployment
 

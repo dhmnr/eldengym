@@ -1,7 +1,7 @@
 site_name: EldenGym Documentation
 site_description: A Gymnasium environment for Elden Ring reinforcement learning
 site_author: EldenGym Team
-site_url: https://dhmnr.github.io/eldengym/
+site_url: https://eldengym-docs.pages.dev/  # Will change to custom domain later
 
 repo_name: dhmnr/eldengym
 repo_url: https://github.com/dhmnr/eldengym

@@ -1,6 +1,6 @@
 # EldenGym 🎮
 
-[![Documentation](https://img.shields.io/badge/docs-github%20pages-blue)](https://dhmnr.github.io/eldengym/)
+[![Documentation](https://img.shields.io/badge/docs-cloudflare%20pages-orange)](https://eldengym-docs.pages.dev/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -38,12 +38,12 @@ env.close()
 
 ## 📚 Documentation
 
-**[Read the full documentation →](https://dhmnr.github.io/eldengym/)**
+**[Read the full documentation →](https://eldengym-docs.pages.dev/)**
 
-- [Installation Guide](https://dhmnr.github.io/eldengym/getting-started/installation/)
-- [Quick Start Tutorial](https://dhmnr.github.io/eldengym/getting-started/quickstart/)
-- [API Reference](https://dhmnr.github.io/eldengym/api/env/)
-- [Examples](https://dhmnr.github.io/eldengym/examples/random_policy/)
+- [Installation Guide](https://eldengym-docs.pages.dev/getting-started/installation/)
+- [Quick Start Tutorial](https://eldengym-docs.pages.dev/getting-started/quickstart/)
+- [API Reference](https://eldengym-docs.pages.dev/api/env/)
+- [Examples](https://eldengym-docs.pages.dev/examples/random_policy/)
 
 ## 🔧 Installation
 
@@ -113,7 +113,7 @@ uv run mkdocs serve
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see our [Contributing Guide](https://dhmnr.github.io/eldengym/development/contributing/).
+Contributions are welcome! Please see our [Contributing Guide](https://eldengym-docs.pages.dev/development/contributing/).
 
 ## 📝 License
 
