@@ -1,6 +1,6 @@
 [project]
 name = "eldengym"
-version = "0.3.0"
+version = "0.3.1"
 description = "A Gymnasium-compatible reinforcement learning environment for Elden Ring"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -27,12 +27,6 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Games/Entertainment",
 ]
-
-[project.urls]
-Homepage = "https://eldengym.dhmnr.sh/"
-Documentation = "https://eldengym.dhmnr.sh/"
-Repository = "https://github.com/dhmnr/eldengym"
-Issues = "https://github.com/dhmnr/eldengym/issues"
 dependencies = [
     "anthropic>=0.69.0",
     "grpcio>=1.75.1",
@@ -45,6 +39,12 @@ dependencies = [
     "pillow>=11.3.0",
     "tomli>=2.0.0; python_version < '3.11'",
 ]
+
+[project.urls]
+Homepage = "https://eldengym.dhmnr.sh/"
+Documentation = "https://eldengym.dhmnr.sh/"
+Repository = "https://github.com/dhmnr/eldengym"
+Issues = "https://github.com/dhmnr/eldengym/issues"
 
 [dependency-groups]
 dev = [
