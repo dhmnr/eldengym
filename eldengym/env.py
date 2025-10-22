@@ -58,6 +58,7 @@ class EldenGymEnv(gym.Env):
         freeze_game=False,
         game_fps=60,
         max_step=None,
+        config_filepath="ER_1_16_1.toml",  # Auto-resolves to eldengym/files/configs/
     ):
         super().__init__()
 
@@ -69,6 +70,7 @@ class EldenGymEnv(gym.Env):
         self.freeze_game = freeze_game
         self.game_fps = game_fps
         self.max_step = max_step
+        self.config_filepath = config_filepath
         self.step_count = 0
         # Reward function
         self.reward_function = reward_function or ScoreDeltaReward(
@@ -93,9 +95,14 @@ class EldenGymEnv(gym.Env):
         self._prev_info = None
         self._last_animation_id = None
 
-        self.download_savefile()
-        self.launch_game()
-        self.bypass_menu()
+        # self._download_savefile() #TODO: Implement this
+        self.client.launch_game()
+        sleep(20)  # Wait for game to launch
+        self.client.load_config_from_file(self.config_filepath, wait_time=2)
+        sleep(2)  # Wait for config to load
+        self.client.bypass_menu()
+        sleep(10)  # Wait for game to load
+        self.first_load = True
 
     def _multi_binary_action_map(self):
         """
@@ -164,7 +171,11 @@ class EldenGymEnv(gym.Env):
         self.client.set_game_speed(self.game_speed)
 
         # Reset game and start scenario
-        self.client.reset_game()
+        if self.first_load:
+            self.first_load = False
+        else:
+            self.client.reset_game()
+
         self.client.start_scenario(self.scenario_name)
         sleep(1)  # Wait for fight to start
 
@@ -285,21 +296,6 @@ class EldenGymEnv(gym.Env):
             "player_hp": self.client.player_hp,
             "boss_hp": self.client.target_hp,
         }
-
-    def download_savefile(self):
-        """Download the savefile from the internet"""
-        # TODO: Implement this
-        pass
-
-    def launch_game(self):
-        """Launch the game"""
-        # TODO: Implement this
-        pass
-
-    def bypass_menu(self):
-        """Bypass the menu"""
-        # TODO: Implement this
-        pass
 
     def close(self):
         """

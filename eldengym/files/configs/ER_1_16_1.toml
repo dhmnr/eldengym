@@ -1,0 +1,185 @@
+[process_info]
+name = "eldenring.exe"
+window_name = "ELDEN RING"
+
+[attributes.HeroHp]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x0, 0x138]
+type = "int"
+
+[attributes.HeroMaxHp]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x0, 0x13C]
+type = "int"
+
+[attributes.HeroFp]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x0, 0x148]
+type = "int"
+
+[attributes.HeroMaxFp]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x0, 0x150]
+type = "int"
+
+[attributes.HeroSp]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x0, 0x154]
+type = "int"
+
+[attributes.HeroMaxSp]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x0, 0x158]
+type = "int"
+
+[attributes.HeroAnimId]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x18, 0x20]
+type = "int"
+
+[attributes.HeroAnimLength]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x18, 0x24]
+type = "float"
+
+[attributes.HeroAnimSpeed]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x28, 0x17C8]
+type = "float"
+
+[attributes.HeroLocalPosX]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x68, 0x70]
+type = "float"
+
+[attributes.HeroLocalPosZ]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x68, 0x74]
+type = "float"
+
+[attributes.HeroLocalPosY]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x190, 0x68, 0x78]
+type = "float"
+
+[attributes.HeroGlobalPosX]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x6C0]
+type = "float"
+
+
+[attributes.HeroGlobalPosZ]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x6C4]
+type = "float"
+
+
+[attributes.HeroGlobalPosY]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x6C8]
+type = "float"
+
+
+[attributes.HeroAngle]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x6CC]
+type = "float"
+
+
+[attributes.HeroMapId]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets = [0x10EF8, 0x0, 0x6D0]
+type = "int"
+
+[attributes.NoGravity]
+pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
+offsets =  [0x10EF8, 0x0, 0x190, 0x68, 0x1D3]
+type = "bool"
+
+[attributes.gameSpeedFlag]
+pattern = "48 8B 0D ?? ?? ?? ?? 80 BB ?? ?? ?? ?? 00 0F 84"
+offsets = [0x2D0]
+type = "bool"
+
+[attributes.gameSpeedVal]
+pattern = "48 8B 0D ?? ?? ?? ?? 80 BB ?? ?? ?? ?? 00 0F 84"
+offsets = [0x2CC]
+type = "float"
+
+[attributes.NpcId]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x28, 0x124]
+type = "int"
+
+[attributes.NpcHp]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x0, 0x138]
+type = "int"
+
+[attributes.NpcMaxHp]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x0, 0x13C]
+type = "int"
+
+[attributes.NpcGlobalPosX]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x68, 0x70]
+type = "float"
+
+[attributes.NpcGlobalPosZ]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x68, 0x74]
+type = "float"
+
+[attributes.NpcGlobalPosY]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x68, 0x78]
+type = "float"
+
+[attributes.NpcGlobalPosAngle]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x68, 0x7C]
+type = "float"
+
+[attributes.NpcLocalPosX]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x68, 0xA8, 0x18, 0x80]
+type = "float"
+
+[attributes.NpcLocalPosZ]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x68, 0xA8, 0x18, 0x84]
+type = "float"
+
+[attributes.NpcLocalPosY]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x68, 0xA8, 0x18, 0x88]
+type = "float"
+
+[attributes.NpcLocalPosAngle]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x68, 0xA8, 0x18, 0x8C]
+type = "float"
+
+[attributes.NpcAnimId]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x18, 0x20]
+type = "int"
+
+[attributes.NpcAnimLength]
+method = "dll"
+pattern = "48 8B 48 08 49 89 8D"
+offsets = [0x190, 0x18, 0x24]
+type = "float"
