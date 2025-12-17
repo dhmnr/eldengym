@@ -1,77 +1,78 @@
 import gymnasium as gym
+import numpy as np
+import json
+import time
 from .client.elden_client import EldenClient
 from .rewards import RewardFunction, ScoreDeltaReward
-from time import sleep
-from enum import Enum
-
-
-class ActionType(Enum):
-    """Categorize actions by their properties"""
-
-    INSTANT = "instant"  # No-op
-    MOVEMENT = "movement"  # Walking, running
-    COMBAT = "combat"  # Attacks, spells
-    DODGE = "dodge"  # Rolling, jumping
 
 
 class EldenGymEnv(gym.Env):
     """
-    Elden Ring Gymnasium environment - OpenAI Five style approach.
+    Elden Ring Gymnasium environment with non-blocking frame streaming.
 
-    Simple design philosophy:
-    - Fixed timestep observations (like Dota/Atari)
-    - Agent gets current game state every step
-    - Let RL figure out action timing from animation_id
+    Uses pysiphon's frame streaming for efficient polling-based observations.
 
     Args:
-        scenario_name (str): Boss scenario. Default: 'margit'
-        host (str): Siphon client host. Default: 'localhost:50051'
-        action_mode (str): Action space type.
-            - 'discrete': Single action per step (14 actions)
-            - 'multi_binary': Multiple keys per step (11 keys)
-        reward_function (RewardFunction): Custom reward function.
-        frame_skip (int): Frames to skip between observations.
-            Higher = faster but less responsive. Default: 4
-        game_speed (float): Game speed (0.1-1.0).
-            Lower = easier for agent. Default: 1.0
-        freeze_game (bool): Whether to freeze the game. Default: False
-        game_fps (int): Game FPS. Default: 60
-        max_step (int): Maximum number of steps. Default: None (infinite horizon)
-
-    Action Spaces:
-        discrete: Gym.spaces.Discrete(14)
-            - Predefined combos (attack, dodge_forward, etc.)
-        multi_binary: Gym.spaces.MultiBinary(11)
-            - Individual keys (W, A, S, D, SPACE, SHIFT, etc.)
-            - Agent can press multiple keys simultaneously
-            - More flexible, closer to human input
+        scenario_name (str): Boss scenario name
+        keybinds_filepath (str): Path to keybinds JSON file
+        siphon_config_filepath (str): Path to siphon TOML config
+        memory_attributes (list[str]): List of memory attribute names to include in observation.
+            Default: ["HeroHp", "HeroMaxHp", "NpcHp", "NpcMaxHp", "HeroAnimId", "NpcAnimId"]
+        host (str): Siphon server host. Default: 'localhost:50051'
+        reward_function (RewardFunction): Custom reward function
+        frame_format (str): Frame format for streaming ('jpeg' or 'raw'). Default: 'jpeg'
+        frame_quality (int): JPEG quality 1-100. Default: 85
+        max_steps (int): Maximum steps per episode. Default: None
     """
 
     def __init__(
         self,
-        scenario_name="margit",
+        scenario_name,
+        keybinds_filepath,
+        siphon_config_filepath,
+        memory_attributes=None,
         host="localhost:50051",
-        action_mode="discrete",
         reward_function=None,
-        frame_skip=4,  # Number of frames to skip (like Atari)
-        game_speed=1.0,  # Game speed multiplier
-        freeze_game=False,
-        game_fps=60,
-        max_step=None,
-        config_filepath="ER_1_16_1.toml",  # Auto-resolves to eldengym/files/configs/
+        frame_format="jpeg",
+        frame_quality=85,
+        max_steps=None,
     ):
         super().__init__()
 
         self.scenario_name = scenario_name
         self.client = EldenClient(host)
-        self.action_mode = action_mode
-        self.frame_skip = frame_skip
-        self.game_speed = game_speed
-        self.freeze_game = freeze_game
-        self.game_fps = game_fps
-        self.max_step = max_step
-        self.config_filepath = config_filepath
+        self.keybinds_filepath = keybinds_filepath
+        self.siphon_config_filepath = siphon_config_filepath
         self.step_count = 0
+        self.max_steps = max_steps
+        self.frame_format = frame_format
+        self.frame_quality = frame_quality
+
+        # Memory attributes to poll (configurable, not hardcoded)
+        self.memory_attributes = memory_attributes or [
+            "HeroHp",
+            "HeroMaxHp",
+            "NpcHp",
+            "NpcMaxHp",
+            "HeroAnimId",
+            "NpcAnimId",
+        ]
+
+        # Load keybinds
+        with open(self.keybinds_filepath, "r") as f:
+            keybinds_data = json.load(f)
+            self.keybinds = keybinds_data["keybinds"]
+
+        # Create action space (multi-binary for all keys)
+        self.action_keys = list(self.keybinds.keys())
+        self.action_space = gym.spaces.MultiBinary(len(self.action_keys))
+
+        # Track current key states for toggling
+        self._key_states = {key: False for key in self.action_keys}
+
+        # Frame stream handle
+        self._stream_handle = None
+
         # Reward function
         self.reward_function = reward_function or ScoreDeltaReward(
             score_key="player_hp"
@@ -79,170 +80,141 @@ class EldenGymEnv(gym.Env):
         if not isinstance(self.reward_function, RewardFunction):
             raise TypeError("reward_fn must inherit from RewardFunction")
 
-        # Actions
-        if action_mode == "discrete":
-            self.action_map = self._discrete_action_map()
-            self.action_space = gym.spaces.Discrete(len(self.action_map))
-            self.action_keybindings = self._discrete_action_keybindings()
-        elif action_mode == "multi_binary":
-            self.action_map = self._multi_binary_action_map()
-            self.action_space = gym.spaces.MultiBinary(len(self.action_map))
-            self.action_keybindings = None  # Not used in multi-binary
-        else:
-            raise ValueError(f"Invalid action mode: {action_mode}")
-
-        # Simple state tracking
+        # State tracking
         self._prev_info = None
-        self._last_animation_id = None
 
-        # self._download_savefile() #TODO: Implement this
+        # Initialize game and siphon
+        print("Launching game...")
         self.client.launch_game()
-        sleep(20)  # Wait for game to launch
-        self.client.load_config_from_file(self.config_filepath, wait_time=2)
-        sleep(2)  # Wait for config to load
-        self.client.bypass_menu()
-        sleep(10)  # Wait for game to load
-        self.first_load = True
+        time.sleep(20)  # Wait for game to launch
 
-    def _multi_binary_action_map(self):
+        print("Initializing Siphon...")
+        self.client.load_config_from_file(self.siphon_config_filepath, wait_time=2)
+        time.sleep(2)
+
+        print("Starting frame stream...")
+        self._stream_handle = self.client.start_frame_stream(
+            format=self.frame_format, quality=self.frame_quality
+        )
+
+        # Setup observation space (will be defined after first observation)
+        self.observation_space = None
+
+    def _poll_observation(self):
         """
-        Multi-binary action mapping - OpenAI Five style.
+        Poll for latest frame and memory attributes.
 
-        Each index can be 0 or 1 (pressed or not).
-        Agent can press multiple keys simultaneously.
+        Returns:
+            dict: Observation with 'frame' and memory attributes
         """
-        return {
-            0: "W",  # Forward
-            1: "A",  # Left
-            2: "S",  # Backward
-            3: "D",  # Right
-            4: "SPACE",  # Jump
-            5: "LEFT_SHIFT",  # Dodge/Sprint
-            6: "E",  # Interact
-            7: "LEFT_ALT",  # Heavy attack modifier key
-            8: "R",  # Use item
-            9: "F",  # Weapon art
-            10: "LEFT",  # Attack key
-        }
+        # Poll latest frame (non-blocking)
+        frame = self.client.get_latest_frame(self._stream_handle)
 
-    def _discrete_action_map(self):
-        """Action mapping"""
-        return {
-            0: {"name": "no-op", "type": ActionType.INSTANT},
-            1: {"name": "forward", "type": ActionType.MOVEMENT},
-            2: {"name": "backward", "type": ActionType.MOVEMENT},
-            3: {"name": "left", "type": ActionType.MOVEMENT},
-            4: {"name": "right", "type": ActionType.MOVEMENT},
-            5: {"name": "jump", "type": ActionType.DODGE},
-            6: {"name": "dodge_forward", "type": ActionType.DODGE},
-            7: {"name": "dodge_backward", "type": ActionType.DODGE},
-            8: {"name": "dodge_left", "type": ActionType.DODGE},
-            9: {"name": "dodge_right", "type": ActionType.DODGE},
-            10: {"name": "interact", "type": ActionType.INSTANT},
-            11: {"name": "attack", "type": ActionType.COMBAT},
-            12: {"name": "use_item", "type": ActionType.COMBAT},
-            13: {"name": "weapon_art", "type": ActionType.COMBAT},
-        }
+        # If no new frame available, wait briefly and retry
+        if frame is None:
+            time.sleep(0.005)
+            frame = self.client.get_latest_frame(self._stream_handle)
 
-    def _discrete_action_keybindings(self):
-        """Keybindings for each action"""
-        return {
-            "no-op": [],
-            "forward": [["W"], 500, 0],
-            "backward": [["S"], 500, 0],
-            "left": [["A"], 500, 0],
-            "right": [["D"], 500, 0],
-            "jump": [["SPACE"], 500, 0],
-            "dodge_forward": [["W", "LEFT_SHIFT"], 100, 200],
-            "dodge_backward": [["S", "LEFT_SHIFT"], 100, 200],
-            "dodge_left": [["A", "LEFT_SHIFT"], 100, 200],
-            "dodge_right": [["D", "LEFT_SHIFT"], 100, 200],
-            "interact": [["E"], 500, 0],
-            "attack": [["LEFT_ALT", "LEFT"], 400, 0],
-            "use_item": [["R"], 500, 0],
-            "weapon_art": [["F"], 500, 0],
-        }
+        # Get memory attributes
+        memory_data = {}
+        for attr_name in self.memory_attributes:
+            try:
+                memory_data[attr_name] = self.client.get_attribute(attr_name)
+            except Exception as e:
+                print(f"Warning: Could not read attribute {attr_name}: {e}")
+                memory_data[attr_name] = 0
+
+        # Combine into observation
+        obs = {"frame": frame, **memory_data}
+
+        return obs
+
+    def _toggle_keys(self, action):
+        """
+        Toggle keys based on multi-binary action and current key states.
+
+        Args:
+            action: Multi-binary array indicating desired key states
+        """
+        for i, desired_state in enumerate(action):
+            key = self.action_keys[i]
+            current_state = self._key_states[key]
+            new_state = bool(desired_state)
+
+            # Only toggle if state changed
+            if new_state != current_state:
+                self.client.input_key_toggle(key, new_state)
+                self._key_states[key] = new_state
+
+    def _release_all_keys(self):
+        """Release all currently pressed keys."""
+        for key, is_pressed in self._key_states.items():
+            if is_pressed:
+                self.client.input_key_toggle(key, False)
+                self._key_states[key] = False
 
     def reset(self, seed=None, options=None):
         """Reset environment - start new episode."""
         super().reset(seed=seed)
 
-        # Set game speed
-        self.client.set_game_speed(self.game_speed)
+        # Release all keys from previous episode
+        self._release_all_keys()
 
-        # Reset game and start scenario
-        if self.first_load:
-            self.first_load = False
-        else:
-            self.client.reset_game()
+        # Reset game state (implement based on your needs)
+        # TODO: Implement proper reset logic
+        # For now, just wait briefly
+        time.sleep(1)
 
-        self.client.start_scenario(self.scenario_name)
-        sleep(1)  # Wait for fight to start
-
-        # Reset state
+        # Reset tracking
+        self.step_count = 0
         self._prev_info = None
-        self._last_animation_id = self.client.player_animation_id
 
         # Get initial observation
-        obs = self._get_observation()
-        info = self._get_info()
-        self._prev_info = info.copy()
+        obs = self._poll_observation()
 
-        if self.freeze_game:
-            self.client.set_game_speed(1e-5)
+        # Define observation space on first reset if not already defined
+        if self.observation_space is None:
+            self.observation_space = gym.spaces.Dict(
+                {
+                    "frame": gym.spaces.Box(
+                        low=0,
+                        high=255,
+                        shape=obs["frame"].shape,
+                        dtype=np.uint8,
+                    ),
+                    **{
+                        attr: gym.spaces.Box(
+                            low=-np.inf, high=np.inf, shape=(), dtype=np.float32
+                        )
+                        for attr in self.memory_attributes
+                    },
+                }
+            )
+
+        info = self._get_info(obs)
+        self._prev_info = info.copy()
 
         return obs, info
 
     def step(self, action):
         """
-        Execute one step
-
-        send action, wait frame_skip frames, return observation.
+        Execute one step with key toggling.
 
         Args:
-            action: int (discrete mode) or array (multi_binary mode)
+            action: Multi-binary array [0/1] for each key in self.action_keys
 
         Returns:
             tuple: (observation, reward, terminated, truncated, info)
         """
+        # Toggle keys based on action
+        self._toggle_keys(action)
 
-        if self.freeze_game:
-            self.client.set_game_speed(self.game_speed)
+        # Brief wait for game to process input
+        time.sleep(0.016)  # ~1 frame at 60fps
 
-        # Send action based on mode
-
-        if self.action_mode == "discrete":
-            # Discrete: single action ID
-            action_data = self.action_map[action]
-            action_name = action_data["name"]
-
-            if action_name != "no-op":
-                keybinding = self.action_keybindings.get(action_name, [])
-                if keybinding:
-                    self.client.send_key(*keybinding)
-
-        elif self.action_mode == "multi_binary":
-            # Multi-binary: array of 0s and 1s
-            # Collect all keys that should be pressed (where action[i] == 1)
-            keys_to_press = []
-            for i, should_press in enumerate(action):
-                if should_press == 1:
-                    keys_to_press.append(self.action_map[i])
-
-            # Send all keys simultaneously if any
-            if keys_to_press:
-                self.client.send_key(keys_to_press, 100, 0)  # Press all together
-
-        # Wait frame_skip frames (like Atari)
-        # Game runs at ~60fps, so frame_skip=4 means ~0.067s between observations
-        sleep(self.frame_skip / self.game_fps)
-
-        if self.freeze_game:
-            self.client.set_game_speed(1e-5)
-
-        # Get observation
-        obs = self._get_observation()
-        info = self._get_info()
+        # Poll observation
+        obs = self._poll_observation()
+        info = self._get_info(obs)
 
         # Calculate reward
         reward = self.reward_function.calculate(obs, info, self._prev_info)
@@ -250,57 +222,60 @@ class EldenGymEnv(gym.Env):
         # Check termination
         terminated = self.reward_function.is_done(obs, info)
         truncated = (
-            self.step_count >= self.max_step if self.max_step is not None else False
+            self.step_count >= self.max_steps if self.max_steps is not None else False
         )
 
-        if terminated or truncated:
-            self.step_count = 0
-        else:
-            self.step_count += 1
-
-        # Update state
+        # Update tracking
+        self.step_count += 1
         self._prev_info = info.copy()
-        self._last_animation_id = self.client.player_animation_id
 
         return obs, reward, terminated, truncated, info
 
-    def _get_observation(self):
+    def _get_info(self, obs):
         """
-        Get raw observation - let agent figure out timing.
+        Extract info dict from observation.
+
+        Args:
+            obs: Observation dict
 
         Returns:
-            dict: Observation with:
-                - frame: Game frame/image
-                - boss_hp: Boss health (0.0-1.0)
-                - player_hp: Player health (0.0-1.0)
-                - distance: Distance to boss
-                - boss_animation_id: Boss animation (for predicting attacks)
-                - player_animation_id: Player animation (for knowing if stuck in animation)
-                - last_animation_id: Previous player animation (to detect changes)
+            dict: Info with normalized/processed values
         """
-        frame = self.client.get_frame()
+        info = {}
 
-        return {
-            "frame": frame,
-            "boss_hp": self.client.target_hp / self.client.target_max_hp,
-            "player_hp": self.client.player_hp / self.client.player_max_hp,
-            "distance": self.client.target_player_distance,
-            "boss_animation_id": self.client.target_animation_id,
-            "player_animation_id": self.client.player_animation_id,
-            "last_animation_id": self._last_animation_id,
-        }
+        # Add normalized HP values if available
+        if "HeroHp" in obs and "HeroMaxHp" in obs:
+            info["player_hp_normalized"] = (
+                obs["HeroHp"] / obs["HeroMaxHp"] if obs["HeroMaxHp"] > 0 else 0
+            )
 
-    def _get_info(self):
-        """Extra debug info"""
-        return {
-            "player_hp": self.client.player_hp,
-            "boss_hp": self.client.target_hp,
-        }
+        if "NpcHp" in obs and "NpcMaxHp" in obs:
+            info["boss_hp_normalized"] = (
+                obs["NpcHp"] / obs["NpcMaxHp"] if obs["NpcMaxHp"] > 0 else 0
+            )
+
+        # Add animation IDs
+        if "HeroAnimId" in obs:
+            info["player_animation"] = obs["HeroAnimId"]
+
+        if "NpcAnimId" in obs:
+            info["boss_animation"] = obs["NpcAnimId"]
+
+        return info
 
     def close(self):
-        """
-        Close the environment and clean up resources.
+        """Close environment and clean up resources."""
+        # Stop frame stream
+        if self._stream_handle is not None:
+            self.client.stop_frame_stream(self._stream_handle)
+            self._stream_handle = None
 
-        This method closes the connection to the siphon client.
-        """
+        # Release all keys
+        self._release_all_keys()
+
+        # Close client
         self.client.close()
+
+    def render(self):
+        """Render is handled by the game itself."""
+        pass

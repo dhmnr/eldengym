@@ -5,7 +5,15 @@ EldenGym - A Gymnasium environment for Elden Ring using Siphon memory reading
 from .client import SiphonClient, EldenClient
 from .env import EldenGymEnv
 from .rewards import RewardFunction, ScoreDeltaReward, CustomReward
-from .wrappers import FrameStack, ResizeFrame, GrayscaleFrame
+from .wrappers import (
+    FrameStack,
+    ResizeFrame,
+    GrayscaleFrame,
+    DictFrameStack,
+    DictResizeFrame,
+    DictGrayscaleFrame,
+    NormalizeMemoryAttributes,
+)
 from .registry import make, register, list_envs
 
 # Import envs module to trigger environment registrations
@@ -22,6 +30,10 @@ __all__ = [
     "FrameStack",
     "ResizeFrame",
     "GrayscaleFrame",
+    "DictFrameStack",
+    "DictResizeFrame",
+    "DictGrayscaleFrame",
+    "NormalizeMemoryAttributes",
     "make",
     "register",
     "list_envs",

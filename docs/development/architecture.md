@@ -29,7 +29,7 @@ Understanding EldenGym's architecture and design decisions.
 │  └──────────────┬──────────────────────┘   │
 │                 │                            │
 │  ┌──────────────▼──────────────────────┐   │
-│  │  SiphonClient (siphon_client.py)    │   │
+│  │  SiphonClient (pysiphon package)    │   │
 │  │  - Pure gRPC wrapper                │   │
 │  │  - Memory operations                │   │
 │  │  - Input injection                  │   │
@@ -102,7 +102,7 @@ render() -> frame
 - Scenario management (`start_scenario()`)
 - Auto-resolving config paths
 
-### 3. SiphonClient (siphon_client.py)
+### 3. SiphonClient (pysiphon package)
 
 **Purpose:** Pure gRPC client wrapper
 
@@ -113,7 +113,7 @@ render() -> frame
 - Frame capture
 - System commands
 
-**Design:** Completely game-agnostic, reusable for other games
+**Design:** Completely game-agnostic, reusable for other games. EldenGym uses the official [pysiphon](https://pysiphon.dhmnr.sh/) package for Siphon communication.
 
 ### 4. Siphon Server (C++)
 
@@ -174,7 +174,7 @@ render() -> frame
    ↓
 3. Convert action to inputs
    ↓
-4. EldenClient.send_key(keys, time)
+4. EldenClient.input_key_tap(keys, time)
    ↓
 5. SiphonClient (gRPC call)
    ↓
@@ -185,7 +185,7 @@ render() -> frame
 8. Read game state
    ├─ EldenClient.player_hp
    ├─ EldenClient.target_hp
-   └─ EldenClient.get_frame()
+   └─ EldenClient.capture_frame()
    ↓
 9. Compute reward
    ↓

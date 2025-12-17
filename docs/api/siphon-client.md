@@ -2,39 +2,38 @@
 
 The `SiphonClient` class provides low-level gRPC communication with the Siphon server.
 
-## SiphonClient
+!!! info "Using pysiphon"
+    EldenGym now uses the official [pysiphon](https://pysiphon.dhmnr.sh/) package for Siphon communication. For complete API documentation, see the [pysiphon API reference](https://pysiphon.dhmnr.sh/api/client/).
 
-::: eldengym.client.siphon_client.SiphonClient
-    options:
-      show_source: true
-      heading_level: 3
+!!! note "Return Types"
+    All pysiphon methods return dictionaries, not protobuf response objects. Access response fields using dictionary keys (e.g., `response['success']`) instead of attributes (e.g., `response.success`).
 
 ## Core Methods
 
 ### Input Control
 
-#### `send_key(keys, hold_time, delay_time=0)`
+#### `input_key_tap(keys, hold_ms, delay_ms=0)`
 
 Send keyboard input to the game.
 
 **Args:**
 - `keys` (list[str]): Keys to press (e.g., `['W', 'SPACE']`)
-- `hold_time` (int): Time to hold keys in milliseconds
-- `delay_time` (int): Delay between keys in milliseconds
+- `hold_ms` (int): Time to hold keys in milliseconds
+- `delay_ms` (int): Delay between keys in milliseconds
 
 **Example:**
 ```python
 # Move forward for 500ms
-client.send_key(['W'], 500)
+client.input_key_tap(['W'], 500)
 
 # Jump (quick tap)
-client.send_key(['SPACE'], 100)
+client.input_key_tap(['SPACE'], 100)
 
 # Multiple keys with delay
-client.send_key(['W', 'SHIFT', 'SPACE'], 200, 100)
+client.input_key_tap(['W', 'SHIFT', 'SPACE'], 200, 100)
 ```
 
-#### `toggle_key(key, toggle)`
+#### `input_key_toggle(key, toggle)`
 
 Press or release a key.
 
@@ -44,9 +43,9 @@ Press or release a key.
 
 ```python
 # Hold forward
-client.toggle_key('W', True)
+client.input_key_toggle('W', True)
 # ... do something ...
-client.toggle_key('W', False)
+client.input_key_toggle('W', False)
 ```
 
 #### `move_mouse(delta_x, delta_y, steps=1)`
@@ -102,7 +101,7 @@ client.set_attribute("gameSpeedVal", 2.0)
 
 ### Frame Capture
 
-#### `get_frame()`
+#### `capture_frame()`
 
 Capture the current game frame.
 
@@ -110,34 +109,39 @@ Capture the current game frame.
 - `np.ndarray`: BGR frame (H, W, 3), uint8
 
 ```python
-frame = client.get_frame()
+frame = client.capture_frame()
 print(f"Frame shape: {frame.shape}")  # e.g., (1080, 1920, 3)
 ```
 
 ### Initialization
 
-#### `set_process_config(process_name, process_window_name, attributes)`
+#### `set_process_config(config_file_path)`
 
-Configure the target process and memory attributes.
+Load TOML config and send to server.
 
 **Args:**
-- `process_name` (str): Process name (e.g., "eldenring.exe")
-- `process_window_name` (str): Window name (e.g., "ELDEN RING")
-- `attributes` (list[dict]): Memory attribute configurations
+- `config_file_path` (str): Path to TOML configuration file
+
+**Returns:**
+- `dict`: Contains keys `success` (bool), `message` (str), and config details
 
 ```python
-attributes = [
-    {
-        'name': 'HeroHp',
-        'pattern': '48 8B 05 ?? ?? ?? ??',
-        'offsets': [0x10EF8, 0x0, 0x190],
-        'type': 'int',
-        'length': 4,
-        'method': ''
-    }
-]
+# Point to your TOML config file
+client.set_process_config("path/to/config.toml")
+```
 
-client.set_process_config("eldenring.exe", "ELDEN RING", attributes)
+**Example TOML config file:**
+```toml
+process_name = "eldenring.exe"
+process_window_name = "ELDEN RING"
+
+[[attributes]]
+name = "HeroHp"
+pattern = "48 8B 05 ?? ?? ?? ??"
+offsets = [0x10EF8, 0x0, 0x190]
+type = "int"
+length = 4
+method = ""
 ```
 
 #### `initialize_memory()`
@@ -145,7 +149,7 @@ client.set_process_config("eldenring.exe", "ELDEN RING", attributes)
 Initialize the memory subsystem.
 
 **Returns:**
-- `InitializeMemoryResponse`: Contains `success`, `message`, `process_id`
+- `dict`: Contains keys `success` (bool), `message` (str), `process_id` (int)
 
 #### `initialize_input(window_name="")`
 
@@ -153,6 +157,9 @@ Initialize the input subsystem.
 
 **Args:**
 - `window_name` (str): Target window name (optional)
+
+**Returns:**
+- `dict`: Contains keys `success` (bool), `message` (str)
 
 #### `initialize_capture(window_name="")`
 
@@ -162,19 +169,19 @@ Initialize the capture subsystem.
 - `window_name` (str): Target window name (optional)
 
 **Returns:**
-- `InitializeCaptureResponse`: Contains `success`, `message`, `window_width`, `window_height`
+- `dict`: Contains keys `success` (bool), `message` (str), `window_width` (int), `window_height` (int)
 
 #### `get_server_status()`
 
 Get current server initialization status.
 
 **Returns:**
-- `GetServerStatusResponse`: Server state information
+- `dict`: Server state information with keys like `memory_initialized`, `process_id`, etc.
 
 ```python
 status = client.get_server_status()
-print(f"Memory initialized: {status.memory_initialized}")
-print(f"Process ID: {status.process_id}")
+print(f"Memory initialized: {status['memory_initialized']}")
+print(f"Process ID: {status['process_id']}")
 ```
 
 ### System Commands
@@ -191,7 +198,7 @@ Execute a system command on the server.
 - `capture_output` (bool): Whether to capture output
 
 **Returns:**
-- `ExecuteCommandResponse`: Contains `success`, `message`, `exit_code`, `stdout_output`, `stderr_output`
+- `dict`: Contains keys `success` (bool), `message` (str), `exit_code` (int), `stdout_output` (str), `stderr_output` (str)
 
 ```python
 # Start the game
@@ -199,7 +206,7 @@ response = client.execute_command(
     "eldenring.exe",
     working_directory="C:/Games/Elden Ring"
 )
-print(f"Exit code: {response.exit_code}")
+print(f"Exit code: {response['exit_code']}")
 ```
 
 ### Connection
@@ -215,7 +222,7 @@ client.close()
 ## Connection Parameters
 
 ```python
-from eldengym.client.siphon_client import SiphonClient
+from pysiphon import SiphonClient
 
 client = SiphonClient(
     host="localhost:50051",              # Server address

@@ -207,8 +207,7 @@ eldengym/
   │   ├── utils.py        # Utility functions
   │   ├── registry.py     # Scenario registry
   │   ├── client/
-  │   │   ├── siphon_client.py   # gRPC client
-  │   │   └── elden_client.py    # Game-specific client
+  │   │   └── elden_client.py    # Game-specific client (uses pysiphon)
   │   └── files/
   │       └── configs/    # Game configurations
   ├── examples/           # Example notebooks

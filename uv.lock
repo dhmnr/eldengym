@@ -715,12 +715,10 @@ wheels = [
 
 [[package]]
 name = "eldengym"
-version = "0.2.0"
-source = { virtual = "." }
+version = "0.3.1"
+source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
-    { name = "grpcio" },
-    { name = "grpcio-tools" },
     { name = "gymnasium" },
     { name = "ipykernel" },
     { name = "matplotlib" },
@@ -728,6 +726,7 @@ dependencies = [
     { name = "numpy", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "opencv-python" },
     { name = "pillow" },
+    { name = "pysiphon" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
 
@@ -751,14 +750,13 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic", specifier = ">=0.69.0" },
-    { name = "grpcio", specifier = ">=1.75.1" },
-    { name = "grpcio-tools", specifier = ">=1.75.1" },
     { name = "gymnasium", specifier = ">=1.2.1" },
     { name = "ipykernel", specifier = ">=6.30.1" },
     { name = "matplotlib", specifier = ">=3.10.7" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "opencv-python", specifier = ">=4.11.0.86" },
     { name = "pillow", specifier = ">=11.3.0" },
+    { name = "pysiphon", specifier = ">=1.0.3" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.0" },
 ]
 
@@ -2529,6 +2527,22 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f2/a5/181488fc2b9d093e3972d2a472855aae8a03f000592dbfce716a512b3359/pyparsing-3.2.5.tar.gz", hash = "sha256:2df8d5b7b2802ef88e8d016a2eb9c7aeaa923529cd251ed0fe4608275d4105b6", size = 1099274, upload-time = "2025-09-21T04:11:06.277Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/10/5e/1aa9a93198c6b64513c9d7752de7422c06402de6600a8767da1524f9570b/pyparsing-3.2.5-py3-none-any.whl", hash = "sha256:e38a4f02064cf41fe6593d328d0512495ad1f3d8a91c4f73fc401b3079a59a5e", size = 113890, upload-time = "2025-09-21T04:11:04.117Z" },
+]
+
+[[package]]
+name = "pysiphon"
+version = "1.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "grpcio" },
+    { name = "grpcio-tools" },
+    { name = "pillow" },
+    { name = "tomli" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c4/de/4631049fb8d5eecab0ced4f0fc06fdeed2f49b9a69e7fdab0f35512e9835/pysiphon-1.0.3.tar.gz", hash = "sha256:930e2ee3fe81b8a287c18f15216db2593412de4fff6d04bfde340d17633add52", size = 21316, upload-time = "2025-11-18T09:54:12.35Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/11/18/f9259c922b5fb07de69c9b443b456a3b8cc5f748640c75a307563032a972/pysiphon-1.0.3-py3-none-any.whl", hash = "sha256:1fa9809f66211915e9d75acca50d7ff1850cc126187ca5246dc52a8560a77920", size = 21671, upload-time = "2025-11-18T09:54:10.954Z" },
 ]
 
 [[package]]

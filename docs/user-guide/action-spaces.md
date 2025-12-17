@@ -142,10 +142,10 @@ Key hold duration (in milliseconds):
 
 ```python
 # Hold keys for 100ms
-client.send_key(['W'], hold_time=100)
+client.input_key_tap(['W'], hold_ms=100)
 
 # Hold keys for 500ms (longer action)
-client.send_key(['R1'], hold_time=500)
+client.input_key_tap(['R1'], hold_ms=500)
 ```
 
 ## Action Examples

@@ -17,7 +17,7 @@ def test_import_env():
 
 def test_import_siphon_client():
     """Test that SiphonClient can be imported."""
-    from eldengym.client.siphon_client import SiphonClient
+    from pysiphon import SiphonClient
 
     assert SiphonClient is not None
 

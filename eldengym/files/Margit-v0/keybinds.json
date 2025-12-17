@@ -1,0 +1,21 @@
+{
+    "keybinds": {
+        "W": "move_forward",
+        "S": "move_back",
+        "A": "move_left",
+        "D": "move_right",
+        "LEFT_SHIFT": "dodge_roll/dash",
+        "BUTTON5": "dodge_roll/dash",
+        "SPACE": "jump",
+        "C": "crouch/standup",
+        "B": "lock_on",
+        "P": "attack",
+        "LEFT": "attack",
+        "L": "strong_attack",
+        "F": "skill",
+        "R": "use_item",
+        "E": "event_action"
+    },
+    "description": "Keyboard to action name mapping for Elden Ring gameplay",
+    "version": "1.0"
+}

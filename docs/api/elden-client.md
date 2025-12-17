@@ -157,12 +157,12 @@ client.start_scenario("margit")
 
 These methods are inherited from `SiphonClient` and provide direct game control:
 
-- `send_key(keys, hold_time, delay_time)` - Send keyboard input
+- `input_key_tap(keys, hold_ms, delay_ms)` - Send keyboard input
 - `move_mouse(delta_x, delta_y, steps)` - Move mouse
-- `toggle_key(key, toggle)` - Press/release key
+- `input_key_toggle(key, toggle)` - Press/release key
 - `get_attribute(name)` - Read memory value
 - `set_attribute(name, value)` - Write memory value
-- `get_frame()` - Capture game frame
+- `capture_frame()` - Capture game frame
 - `execute_command(...)` - Execute system command
 
 See [SiphonClient API](siphon-client.md) for details.
@@ -184,11 +184,11 @@ print(f"Boss HP: {client.target_hp}/{client.target_max_hp}")
 print(f"Distance: {client.target_player_distance:.2f}")
 
 # Control the game
-client.send_key(["W"], 500)  # Move forward for 500ms
-client.send_key(["SPACE"], 100)  # Jump
+client.input_key_tap(["W"], 500)  # Move forward for 500ms
+client.input_key_tap(["SPACE"], 100)  # Jump
 
 # Capture frame
-frame = client.get_frame()
+frame = client.capture_frame()
 print(f"Frame shape: {frame.shape}")
 
 # Clean up

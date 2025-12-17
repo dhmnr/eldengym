@@ -1,5 +1,4 @@
-from .siphon_client import SiphonClient
-from ..utils import parse_config_file
+from pysiphon import SiphonClient
 import numpy as np
 from pathlib import Path
 from time import sleep
@@ -96,7 +95,7 @@ class EldenClient(SiphonClient):
             wait_time: int, seconds to wait after loading config before initializing subsystems
 
         Returns:
-            dict with keys 'config', 'memory', 'input', 'capture' containing the responses
+            dict with keys 'config', 'memory', 'input', 'capture' containing the response dictionaries
 
         Raises:
             FileNotFoundError: If config file doesn't exist
@@ -117,28 +116,18 @@ class EldenClient(SiphonClient):
         # Resolve config path
         resolved_path = self._resolve_config_path(config_filepath)
 
-        # Parse config file
+        # pysiphon's set_process_config reads the TOML file directly
         print(f"Loading config from: {resolved_path}")
-        process_name, process_window_name, attributes = parse_config_file(resolved_path)
-
-        print(
-            f"Config loaded - Process: {process_name}, Window: {process_window_name}, "
-            f"Attributes: {len(attributes)}"
-        )
-
-        # Send config to server
         print("Sending configuration to server...")
-        config_response = self.set_process_config(
-            process_name, process_window_name, attributes
-        )
+        config_response = self.set_process_config(str(resolved_path))
         results["config"] = config_response
 
-        if not config_response.success:
+        if not config_response.get("success", False):
             raise RuntimeError(
-                f"Failed to set process config: {config_response.message}"
+                f"Failed to set process config: {config_response.get('message', 'Unknown error')}"
             )
 
-        print(f"Server response: {config_response.message}")
+        print(f"Server response: {config_response.get('message', 'Success')}")
 
         # Wait for process to be ready
         if wait_time > 0:
@@ -150,43 +139,42 @@ class EldenClient(SiphonClient):
         memory_response = self.initialize_memory()
         results["memory"] = memory_response
 
-        if not memory_response.success:
+        if not memory_response.get("success", False):
             raise RuntimeError(
-                f"Failed to initialize memory: {memory_response.message}"
+                f"Failed to initialize memory: {memory_response.get('message', 'Unknown error')}"
             )
 
-        print(f"Server response: {memory_response.message}")
-        if hasattr(memory_response, "process_id") and memory_response.process_id > 0:
-            print(f"Process ID: {memory_response.process_id}")
+        print(f"Server response: {memory_response.get('message', 'Success')}")
+        if memory_response.get("process_id", 0) > 0:
+            print(f"Process ID: {memory_response['process_id']}")
 
         # Initialize input
         print("Initializing input subsystem...")
         input_response = self.initialize_input()
         results["input"] = input_response
 
-        if not input_response.success:
-            raise RuntimeError(f"Failed to initialize input: {input_response.message}")
+        if not input_response.get("success", False):
+            raise RuntimeError(
+                f"Failed to initialize input: {input_response.get('message', 'Unknown error')}"
+            )
 
-        print(f"Server response: {input_response.message}")
+        print(f"Server response: {input_response.get('message', 'Success')}")
 
         # Initialize capture
         print("Initializing capture subsystem...")
         capture_response = self.initialize_capture()
         results["capture"] = capture_response
 
-        if not capture_response.success:
+        if not capture_response.get("success", False):
             raise RuntimeError(
-                f"Failed to initialize capture: {capture_response.message}"
+                f"Failed to initialize capture: {capture_response.get('message', 'Unknown error')}"
             )
 
-        print(f"Server response: {capture_response.message}")
-        if hasattr(capture_response, "window_width") and hasattr(
-            capture_response, "window_height"
-        ):
-            if capture_response.window_width > 0 and capture_response.window_height > 0:
-                print(
-                    f"Window size: {capture_response.window_width}x{capture_response.window_height}"
-                )
+        print(f"Server response: {capture_response.get('message', 'Success')}")
+        window_width = capture_response.get("window_width", 0)
+        window_height = capture_response.get("window_height", 0)
+        if window_width > 0 and window_height > 0:
+            print(f"Window size: {window_width}x{window_height}")
 
         print("\n=== Initialization Complete! ===")
         print("All subsystems initialized successfully.")
@@ -202,12 +190,14 @@ class EldenClient(SiphonClient):
             args=None,
             working_directory="C:\Program Files (x86)\Steam\steamapps\common\ELDEN RING\Game",
         )
-        if not launch_response.success:
-            raise RuntimeError(f"Failed to launch game: {launch_response.message}")
+        if not launch_response.get("success", False):
+            raise RuntimeError(
+                f"Failed to launch game: {launch_response.get('message', 'Unknown error')}"
+            )
 
-        print(f"Server response: {launch_response.message}")
-        if hasattr(launch_response, "process_id") and launch_response.process_id > 0:
-            print(f"Process ID: {launch_response.process_id}")
+        print(f"Server response: {launch_response.get('message', 'Success')}")
+        if launch_response.get("process_id", 0) > 0:
+            print(f"Process ID: {launch_response['process_id']}")
 
         return launch_response
 
@@ -215,11 +205,11 @@ class EldenClient(SiphonClient):
         """
         Bypass the menu.
         """
-        self.send_key(["ENTER"], 200, 0)
+        self.input_key_tap(["ENTER"], 200, 0)
         sleep(1)
-        self.send_key(["ENTER"], 200, 0)
+        self.input_key_tap(["ENTER"], 200, 0)
         sleep(1)
-        self.send_key(["ENTER"], 200, 0)
+        self.input_key_tap(["ENTER"], 200, 0)
 
     ## =========== Player methods ===========
     @property
@@ -365,6 +355,6 @@ class EldenClient(SiphonClient):
         self.teleport(x, y, z)
         self.move_mouse(1000, 0, 1)
         sleep(2)
-        self.send_key(["W", "E"], 200, 200)
+        self.input_key_tap(["W", "E"], 200, 200)
         sleep(2)
-        self.send_key(["B"], 200)
+        self.input_key_tap(["B"], 200)
