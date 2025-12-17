@@ -4,7 +4,12 @@ EldenGym - A Gymnasium environment for Elden Ring using Siphon memory reading
 
 from .client import SiphonClient, EldenClient
 from .env import EldenGymEnv
-from .rewards import RewardFunction, ScoreDeltaReward, CustomReward
+from .rewards import (
+    RewardFunction,
+    ScoreDeltaReward,
+    BossDefeatReward,
+    CustomReward,
+)
 from .wrappers import (
     FrameStack,
     ResizeFrame,
@@ -26,6 +31,7 @@ __all__ = [
     "EldenGymEnv",
     "RewardFunction",
     "ScoreDeltaReward",
+    "BossDefeatReward",
     "CustomReward",
     "FrameStack",
     "ResizeFrame",

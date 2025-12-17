@@ -1,44 +1,26 @@
-"""Tests for utility functions."""
+"""Test utility functions."""
 
-import pytest
 from pathlib import Path
-from eldengym.utils import parse_config_file
+from eldengym.utils import resolve_file_path
 
 
-def test_parse_config_file_valid():
-    """Test parsing a valid config file."""
-    # Using the actual ER config file
-    config_path = (
-        Path(__file__).parent.parent
-        / "eldengym"
-        / "files"
-        / "configs"
-        / "ER_1_16_1.toml"
-    )
-
-    if config_path.exists():
-        process_name, window_name, attributes = parse_config_file(config_path)
-
-        assert process_name == "eldenring.exe"
-        assert window_name == "ELDEN RING"
-        assert len(attributes) > 0
-        assert all("name" in attr for attr in attributes)
-        assert all("pattern" in attr for attr in attributes)
-        assert all("offsets" in attr for attr in attributes)
-        assert all("type" in attr for attr in attributes)
+def test_resolve_file_path_absolute():
+    """Test resolving absolute paths."""
+    abs_path = Path("/absolute/path/file.txt")
+    resolved = resolve_file_path(abs_path)
+    assert resolved == abs_path
 
 
-def test_parse_config_file_not_found():
-    """Test parsing a non-existent config file."""
-    with pytest.raises(FileNotFoundError):
-        parse_config_file("nonexistent.toml")
+def test_resolve_file_path_relative():
+    """Test resolving relative paths."""
+    rel_path = "files/config.toml"
+    resolved = resolve_file_path(rel_path, relative_to_package=True)
+    assert resolved.is_absolute()
+    assert "eldengym" in str(resolved)
 
 
-def test_parse_config_file_invalid_structure(tmp_path):
-    """Test parsing a config file with invalid structure."""
-    # Create a TOML file without required sections
-    invalid_config = tmp_path / "invalid.toml"
-    invalid_config.write_text("[some_section]\nkey = 'value'")
-
-    with pytest.raises(ValueError, match="Missing.*section"):
-        parse_config_file(invalid_config)
+def test_resolve_file_path_no_package():
+    """Test resolving without package reference."""
+    rel_path = "test.txt"
+    resolved = resolve_file_path(rel_path, relative_to_package=False)
+    assert resolved.is_absolute()

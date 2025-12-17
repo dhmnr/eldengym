@@ -34,7 +34,7 @@ def test_import_utils():
     from eldengym import utils
 
     assert utils is not None
-    assert hasattr(utils, "parse_config_file")
+    assert hasattr(utils, "resolve_file_path")
 
 
 def test_import_rewards():
@@ -42,3 +42,7 @@ def test_import_rewards():
     from eldengym import rewards
 
     assert rewards is not None
+    assert hasattr(rewards, "RewardFunction")
+    assert hasattr(rewards, "ScoreDeltaReward")
+    assert hasattr(rewards, "BossDefeatReward")
+    assert hasattr(rewards, "CustomReward")

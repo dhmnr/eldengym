@@ -23,31 +23,6 @@ class EldenClient(SiphonClient):
         }
 
     ## =========== Initialization methods ===========
-    # def load_config_from_file(self, config_filepath):
-    #     """
-    #     Load process configuration from a TOML file and send to server.
-
-    #     This is a convenience method that parses the config file and calls
-    #     set_process_config with the extracted data.
-
-    #     Args:
-    #         config_filepath: str or Path, path to TOML config file
-
-    #     Returns:
-    #         SetProcessConfigResponse from server
-
-    #     Raises:
-    #         FileNotFoundError: If config file doesn't exist
-    #         ValueError: If config file is malformed
-
-    #     Example:
-    #         >>> client = EldenClient()
-    #         >>> response = client.load_config_from_file("config.toml")
-    #         >>> if response.success:
-    #         ...     print("Config loaded successfully!")
-    #     """
-    #     process_name, process_window_name, attributes = parse_config_file(config_filepath)
-    #     return self.set_process_config(process_name, process_window_name, attributes)
 
     def _resolve_config_path(self, config_filepath):
         """
