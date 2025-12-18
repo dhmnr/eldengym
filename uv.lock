@@ -727,7 +727,6 @@ dependencies = [
     { name = "opencv-python" },
     { name = "pillow" },
     { name = "pysiphon" },
-    { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
 
 [package.dev-dependencies]
@@ -756,8 +755,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "opencv-python", specifier = ">=4.11.0.86" },
     { name = "pillow", specifier = ">=11.3.0" },
-    { name = "pysiphon", specifier = ">=1.0.3" },
-    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.0" },
+    { name = "pysiphon", specifier = ">=1.1.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -2531,7 +2529,7 @@ wheels = [
 
 [[package]]
 name = "pysiphon"
-version = "1.0.3"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -2540,9 +2538,9 @@ dependencies = [
     { name = "pillow" },
     { name = "tomli" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/de/4631049fb8d5eecab0ced4f0fc06fdeed2f49b9a69e7fdab0f35512e9835/pysiphon-1.0.3.tar.gz", hash = "sha256:930e2ee3fe81b8a287c18f15216db2593412de4fff6d04bfde340d17633add52", size = 21316, upload-time = "2025-11-18T09:54:12.35Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d0/df/5c0a44f1742a8a78562472091579701212a8d85efdfee71e8dc673278497/pysiphon-1.1.0.tar.gz", hash = "sha256:b0b17620ce0eb50d25a971e1c0b4dab3b3a26b79db7697885962c5a31e362554", size = 24654, upload-time = "2025-12-17T06:49:41.678Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/11/18/f9259c922b5fb07de69c9b443b456a3b8cc5f748640c75a307563032a972/pysiphon-1.0.3-py3-none-any.whl", hash = "sha256:1fa9809f66211915e9d75acca50d7ff1850cc126187ca5246dc52a8560a77920", size = 21671, upload-time = "2025-11-18T09:54:10.954Z" },
+    { url = "https://files.pythonhosted.org/packages/99/bb/7e9c72ff236d871d316c97cc66cb14b2e7b337d5b49279f0c0f8edcc0ac9/pysiphon-1.1.0-py3-none-any.whl", hash = "sha256:bf99b6cb54af5aa85679315bba885205f44b98d410cbce41de40f924f4094370", size = 24534, upload-time = "2025-12-17T06:49:40.432Z" },
 ]
 
 [[package]]

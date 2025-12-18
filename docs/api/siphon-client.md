@@ -75,12 +75,21 @@ Read a memory value.
 - `attribute_name` (str): Name of the attribute (from config)
 
 **Returns:**
-- `int | float | bytes`: The attribute value
+- `dict`: Response with keys:
+  - `success` (bool): Whether read was successful
+  - `message` (str): Status message
+  - `value` (int | float | bytes): The actual attribute value
+  - `value_type` (str): Type of the value ('int', 'float', 'bytes')
 
 ```python
-hp = client.get_attribute("HeroHp")
-max_hp = client.get_attribute("HeroMaxHp")
-print(f"HP: {hp}/{max_hp}")
+response = client.get_attribute("HeroHp")
+hp = response['value']  # Extract the value
+
+# Or with error checking
+response = client.get_attribute("HeroMaxHp")
+if response['success']:
+    max_hp = response['value']
+    print(f"HP: {hp}/{max_hp}")
 ```
 
 #### `set_attribute(attribute_name, value)`

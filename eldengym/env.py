@@ -23,6 +23,8 @@ class EldenGymEnv(gym.Env):
         frame_format (str): Frame format for streaming ('jpeg' or 'raw'). Default: 'jpeg'
         frame_quality (int): JPEG quality 1-100. Default: 85
         max_steps (int): Maximum steps per episode. Default: None
+        launch_game (bool): Whether to launch the game automatically. Default: True
+            Set to False if game is already running
     """
 
     def __init__(
@@ -36,6 +38,7 @@ class EldenGymEnv(gym.Env):
         frame_format="jpeg",
         frame_quality=85,
         max_steps=None,
+        launch_game=True,
     ):
         super().__init__()
 
@@ -84,13 +87,26 @@ class EldenGymEnv(gym.Env):
         self._prev_info = None
 
         # Initialize game and siphon
-        print("Launching game...")
-        self.client.launch_game()
-        time.sleep(20)  # Wait for game to launch
+        if launch_game:
+            print("Launching game...")
+            self.client.launch_game()
+            time.sleep(20)  # Wait for game to launch
+        else:
+            print("Skipping game launch (launch_game=False)")
 
         print("Initializing Siphon...")
         self.client.load_config_from_file(self.siphon_config_filepath, wait_time=2)
         time.sleep(2)
+
+        # Verify server is ready
+        print("Checking server status...")
+        status = self.client.get_server_status()
+        print(f"Server status: {status}")
+
+        if not status.get("memory_initialized", False):
+            raise RuntimeError("Memory subsystem not initialized!")
+        if not status.get("capture_initialized", False):
+            raise RuntimeError("Capture subsystem not initialized!")
 
         print("Starting frame stream...")
         self._stream_handle = self.client.start_frame_stream(
@@ -108,20 +124,50 @@ class EldenGymEnv(gym.Env):
             dict: Observation with 'frame' and memory attributes
         """
         # Poll latest frame (non-blocking)
-        frame = self.client.get_latest_frame(self._stream_handle)
+        frame_data = self.client.get_latest_frame(self._stream_handle)
 
         # If no new frame available, wait briefly and retry
-        if frame is None:
+        if frame_data is None:
             time.sleep(0.005)
-            frame = self.client.get_latest_frame(self._stream_handle)
+            frame_data = self.client.get_latest_frame(self._stream_handle)
+
+        # Decode frame from protobuf FrameData object
+        if frame_data is not None:
+            import cv2
+            import numpy as np
+
+            # Extract JPEG bytes from protobuf
+            jpeg_bytes = frame_data.data
+
+            if jpeg_bytes and len(jpeg_bytes) > 0:
+                # Decode JPEG bytes to numpy array
+                frame_array = np.frombuffer(jpeg_bytes, dtype=np.uint8)
+                frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
+            else:
+                # Fallback: create black frame if no data
+                frame = np.zeros(
+                    (frame_data.height, frame_data.width, 3), dtype=np.uint8
+                )
+        else:
+            # No frame available, create black placeholder
+            frame = np.zeros((2160, 3840, 3), dtype=np.uint8)
 
         # Get memory attributes
         memory_data = {}
         for attr_name in self.memory_attributes:
             try:
-                memory_data[attr_name] = self.client.get_attribute(attr_name)
+                response = self.client.get_attribute(attr_name)
+                # pysiphon returns dict with 'value' key
+                if isinstance(response, dict):
+                    value = response.get("value", 0)
+                else:
+                    value = response
+                memory_data[attr_name] = value
             except Exception as e:
                 print(f"Warning: Could not read attribute {attr_name}: {e}")
+                print(
+                    "  This might mean the game isn't fully loaded yet or the attribute doesn't exist."
+                )
                 memory_data[attr_name] = 0
 
         # Combine into observation
