@@ -12,7 +12,7 @@ class EldenClient(SiphonClient):
     def __init__(self, host="localhost:50051", **kwargs):
         super().__init__(host, **kwargs)
         self.scenarios = {
-            "margit": {
+            "Margit-v0": {
                 "boss_name": "Margit",
                 "fog_wall_location": (
                     19.958229064941406,
@@ -176,111 +176,179 @@ class EldenClient(SiphonClient):
 
         return launch_response
 
-    def bypass_menu(self):
-        """
-        Bypass the menu.
-        """
-        self.input_key_tap(["ENTER"], 200, 0)
-        sleep(1)
-        self.input_key_tap(["ENTER"], 200, 0)
-        sleep(1)
-        self.input_key_tap(["ENTER"], 200, 0)
-
     ## =========== Player methods ===========
     @property
     def player_hp(self):
         """
         Get the health of the player.
+
+        Returns:
+            int: Current HP value
         """
-        return self.get_attribute("HeroHp")
+        response = self.get_attribute("HeroHp")
+        return response.get("value", 0) if isinstance(response, dict) else response
 
     @property
     def player_max_hp(self):
         """
         Get the maximum health of the player.
+
+        Returns:
+            int: Maximum HP value
         """
-        return self.get_attribute("HeroMaxHp")
+        response = self.get_attribute("HeroMaxHp")
+        return response.get("value", 0) if isinstance(response, dict) else response
 
     def set_player_hp(self, hp):
         """
         Set the health of the player.
+
+        Args:
+            hp (int): HP value to set
         """
-        self.set_attribute("HeroHp", hp)
+        self.set_attribute("HeroHp", hp, "int")
 
     @property
     def local_player_coords(self):
         """
-        Get the location of the player.
+        Get the local coordinates of the player.
+
+        Returns:
+            tuple: (x, y, z) local coordinates
         """
         local_x = self.get_attribute("HeroLocalPosX")
         local_y = self.get_attribute("HeroLocalPosY")
         local_z = self.get_attribute("HeroLocalPosZ")
+
+        # Extract values from dict responses
+        local_x = local_x.get("value", 0.0) if isinstance(local_x, dict) else local_x
+        local_y = local_y.get("value", 0.0) if isinstance(local_y, dict) else local_y
+        local_z = local_z.get("value", 0.0) if isinstance(local_z, dict) else local_z
+
         return local_x, local_y, local_z
 
     @property
     def global_player_coords(self):
         """
-        Get the location of the player.
+        Get the global coordinates of the player.
+
+        Returns:
+            tuple: (x, y, z) global coordinates
         """
         global_x = self.get_attribute("HeroGlobalPosX")
         global_y = self.get_attribute("HeroGlobalPosY")
         global_z = self.get_attribute("HeroGlobalPosZ")
+
+        # Extract values from dict responses
+        global_x = (
+            global_x.get("value", 0.0) if isinstance(global_x, dict) else global_x
+        )
+        global_y = (
+            global_y.get("value", 0.0) if isinstance(global_y, dict) else global_y
+        )
+        global_z = (
+            global_z.get("value", 0.0) if isinstance(global_z, dict) else global_z
+        )
+
         return global_x, global_y, global_z
 
     @property
     def player_animation_id(self):
         """
         Get the animation id of the player.
+
+        Returns:
+            int: Animation ID
         """
-        return self.get_attribute("HeroAnimId")
+        response = self.get_attribute("HeroAnimId")
+        return response.get("value", 0) if isinstance(response, dict) else response
 
     ## =========== Target methods ===========
     @property
     def target_hp(self):
         """
         Get the health of the target.
+
+        Returns:
+            int: Current target HP value
         """
-        return self.get_attribute("NpcHp")
+        response = self.get_attribute("NpcHp")
+        return response.get("value", 0) if isinstance(response, dict) else response
 
     @property
     def target_max_hp(self):
         """
         Get the maximum health of the target.
+
+        Returns:
+            int: Maximum target HP value
         """
-        return self.get_attribute("NpcMaxHp")
+        response = self.get_attribute("NpcMaxHp")
+        return response.get("value", 0) if isinstance(response, dict) else response
 
     def set_target_hp(self, hp):
         """
         Set the health of the target.
+
+        Args:
+            hp (int): HP value to set
         """
-        self.set_attribute("NpcHp", hp)
+        self.set_attribute("NpcHp", hp, "int")
 
     @property
     def local_target_coords(self):
         """
-        Get the location of the target.
+        Get the local coordinates of the target.
+
+        Returns:
+            tuple: (x, y, z) local coordinates
         """
         local_x = self.get_attribute("NpcLocalPosX")
         local_y = self.get_attribute("NpcLocalPosY")
         local_z = self.get_attribute("NpcLocalPosZ")
+
+        # Extract values from dict responses
+        local_x = local_x.get("value", 0.0) if isinstance(local_x, dict) else local_x
+        local_y = local_y.get("value", 0.0) if isinstance(local_y, dict) else local_y
+        local_z = local_z.get("value", 0.0) if isinstance(local_z, dict) else local_z
+
         return local_x, local_y, local_z
 
     @property
     def global_target_coords(self):
         """
-        Get the location of the target.
+        Get the global coordinates of the target.
+
+        Returns:
+            tuple: (x, y, z) global coordinates
         """
         global_x = self.get_attribute("NpcGlobalPosX")
         global_y = self.get_attribute("NpcGlobalPosY")
         global_z = self.get_attribute("NpcGlobalPosZ")
+
+        # Extract values from dict responses
+        global_x = (
+            global_x.get("value", 0.0) if isinstance(global_x, dict) else global_x
+        )
+        global_y = (
+            global_y.get("value", 0.0) if isinstance(global_y, dict) else global_y
+        )
+        global_z = (
+            global_z.get("value", 0.0) if isinstance(global_z, dict) else global_z
+        )
+
         return global_x, global_y, global_z
 
     @property
     def target_animation_id(self):
         """
         Get the animation id of the target.
+
+        Returns:
+            int: Animation ID
         """
-        return self.get_attribute("NpcAnimId")
+        response = self.get_attribute("NpcAnimId")
+        return response.get("value", 0) if isinstance(response, dict) else response
 
     ## =========== Helper methods ===========
     @property
@@ -297,29 +365,28 @@ class EldenClient(SiphonClient):
     def teleport(self, x, y, z):
         """
         Teleport the player to the given coordinates.
+
+        Args:
+            x (float): Target X coordinate
+            y (float): Target Y coordinate
+            z (float): Target Z coordinate
         """
         # FIXME: Close range teleport, need to check MapId for long range teleport.
         local_x, local_y, local_z = self.local_player_coords
         global_x, global_y, global_z = self.global_player_coords
-        self.set_attribute("HeroLocalPosX", local_x + (x - global_x))
-        self.set_attribute("HeroLocalPosY", local_y + (y - global_y))
-        self.set_attribute("HeroLocalPosZ", local_z + (z - global_z))
+        self.set_attribute("HeroLocalPosX", local_x + (x - global_x), "float")
+        self.set_attribute("HeroLocalPosY", local_y + (y - global_y), "float")
+        self.set_attribute("HeroLocalPosZ", local_z + (z - global_z), "float")
 
     def set_game_speed(self, speed):
         """
         Set the game speed.
-        """
-        self.set_attribute("gameSpeedFlag", True)
-        self.set_attribute("gameSpeedVal", speed)
 
-    def reset_game(self):
+        Args:
+            speed (float): Game speed multiplier (e.g., 0.5 for half speed, 2.0 for double speed)
         """
-        Reset the game by setting the player's hp to 0.
-        """
-        self.set_player_hp(0)
-        sleep(
-            20
-        )  # FIXME: This is a hack to wait for the game to reset, doesn't work well.
+        self.set_attribute("gameSpeedFlag", True, "bool")
+        self.set_attribute("gameSpeedVal", speed, "float")
 
     def start_scenario(self, scenario_name="Margit"):
         """
@@ -333,3 +400,88 @@ class EldenClient(SiphonClient):
         self.input_key_tap(["W", "E"], 200, 200)
         sleep(2)
         self.input_key_tap(["B"], 200)
+
+    ## =========== Save File Management ===========
+    def copy_save_file(self, save_file_name, save_file_dir=None, timeout_seconds=10):
+        """
+        Copy a backup save file to become the active save file.
+
+        """
+        import os
+
+        # Use default Elden Ring save directory if not provided
+        if save_file_dir is None:
+            # Default path - user will need to replace with their Steam ID
+            save_file_dir = os.path.join(
+                os.getenv("APPDATA"),
+                "EldenRing",
+                # Note: Need to append the actual Steam ID subdirectory
+            )
+            print(f"[Warning] Using default save directory: {save_file_dir}")
+            print(
+                "[Warning] You may need to specify the full path including your Steam ID"
+            )
+
+        source_path = os.path.join(save_file_dir, save_file_name)
+        dest_path = os.path.join(save_file_dir, "ER0000.sl2")
+
+        print("Copying save file:")
+        print(f"  Source: {source_path}")
+        print(f"  Dest:   {dest_path}")
+
+        # Use PowerShell to copy the file
+        result = self.execute_command(
+            "powershell",
+            args=[
+                "-Command",
+                f'Copy-Item -Path "{source_path}" -Destination "{dest_path}" -Force',
+            ],
+            timeout_seconds=timeout_seconds,
+            capture_output=True,
+        )
+
+        if not result.get("success", False):
+            raise RuntimeError(
+                f"Failed to copy save file: {result.get('message', 'Unknown error')}"
+            )
+
+        print("✓ Save file copied successfully")
+        sleep(2.0)  # Wait for filesystem to sync
+
+        return result
+
+    ## =========== Menu methods ===========
+    def enter_menu(self):
+        """
+        Enter the menu.
+        """
+        self.input_key_tap(["ENTER"], 200, 0)
+        sleep(1)
+        self.input_key_tap(["ENTER"], 200, 0)
+        sleep(1)
+        self.input_key_tap(["ENTER"], 200, 0)
+        sleep(10)
+
+    def quit_to_title(self):
+        """
+        Quit the game to the title screen.
+        """
+        self.input_key_tap(["ESC"])
+        sleep(0.3)
+
+        # Navigate menu (UP_ARROW, E)
+        self.input_key_tap(["UP_ARROW"])
+        sleep(0.3)
+        self.input_key_tap(["E"])
+        sleep(0.3)
+
+        # Confirm quit (Z, E, LEFT_ARROW, E)
+        self.input_key_tap(["Z"])
+        sleep(0.3)
+        self.input_key_tap(["E"])
+        sleep(0.3)
+        self.input_key_tap(["LEFT_ARROW"])
+        sleep(0.3)
+        self.input_key_tap(["E"])
+        sleep(12.0)
+        sleep(5.0)

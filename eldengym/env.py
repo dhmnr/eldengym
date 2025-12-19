@@ -25,6 +25,10 @@ class EldenGymEnv(gym.Env):
         max_steps (int): Maximum steps per episode. Default: None
         launch_game (bool): Whether to launch the game automatically. Default: True
             Set to False if game is already running
+        save_file_name (str, optional): Name of backup save file to copy during reset
+            (e.g., "margit_checkpoint.sl2"). If None, no save file copying occurs.
+        save_file_dir (str, optional): Directory containing save files. Required if
+            save_file_name is provided. Typically: %APPDATA%/EldenRing/<steam_id>/
     """
 
     def __init__(
@@ -39,6 +43,8 @@ class EldenGymEnv(gym.Env):
         frame_quality=85,
         max_steps=None,
         launch_game=True,
+        save_file_name=None,
+        save_file_dir=None,
     ):
         super().__init__()
 
@@ -50,6 +56,8 @@ class EldenGymEnv(gym.Env):
         self.max_steps = max_steps
         self.frame_format = frame_format
         self.frame_quality = frame_quality
+        self.save_file_name = save_file_name
+        self.save_file_dir = save_file_dir
 
         # Memory attributes to poll (configurable, not hardcoded)
         self.memory_attributes = memory_attributes or [
@@ -91,6 +99,7 @@ class EldenGymEnv(gym.Env):
             print("Launching game...")
             self.client.launch_game()
             time.sleep(20)  # Wait for game to launch
+            self.client.enter_game()
         else:
             print("Skipping game launch (launch_game=False)")
 
@@ -206,10 +215,16 @@ class EldenGymEnv(gym.Env):
         # Release all keys from previous episode
         self._release_all_keys()
 
-        # Reset game state (implement based on your needs)
-        # TODO: Implement proper reset logic
-        # For now, just wait briefly
-        time.sleep(1)
+        # Reset game state
+        self.client.quit_to_title()
+
+        # Copy save file if configured
+        if self.save_file_name and self.save_file_dir:
+            print(f"Copying save file: {self.save_file_name}")
+            self.client.copy_save_file(self.save_file_name, self.save_file_dir)
+
+        self.client.enter_menu()
+        self.client.start_scenario(self.scenario_name)
 
         # Reset tracking
         self.step_count = 0
