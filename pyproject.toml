@@ -1,6 +1,6 @@
 [project]
 name = "eldengym"
-version = "0.3.1"
+version = "0.4.1"
 description = "A Gymnasium-compatible reinforcement learning environment for Elden Ring"
 readme = "README.md"
 requires-python = ">=3.10"
