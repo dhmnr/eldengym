@@ -5,11 +5,10 @@ This guide will walk you through creating your first RL agent with EldenGym.
 ## Basic Setup
 
 ```python
-import gymnasium as gym
 import eldengym
 
-# Create environment
-env = gym.make("EldenGym-v0", scenario_name="margit")
+# Create environment (use eldengym.make() for registered environments)
+env = eldengym.make("Margit-v0", launch_game=False)
 ```
 
 ## Simple Random Agent
@@ -18,15 +17,21 @@ env = gym.make("EldenGym-v0", scenario_name="margit")
 # Reset environment
 observation, info = env.reset()
 
+# observation is a dict with 'frame' and memory attributes
+print(f"Observation keys: {observation.keys()}")
+print(f"Frame shape: {observation['frame'].shape}")
+
 # Run for 100 steps
 for step in range(100):
-    # Sample random action
+    # Sample random action (MultiBinary action space)
     action = env.action_space.sample()
 
     # Take action
     observation, reward, terminated, truncated, info = env.step(action)
 
-    print(f"Step {step}: Reward={reward:.2f}, HP={info.get('player_hp', 0)}")
+    # Info contains normalized HP values
+    hero_hp_pct = info.get('normalized_hero_hp', 0) * 100
+    print(f"Step {step}: Reward={reward:.2f}, HP={hero_hp_pct:.1f}%")
 
     # Reset if episode ends
     if terminated or truncated:
@@ -38,18 +43,32 @@ env.close()
 
 ## With Stable-Baselines3
 
+**Note:** You'll need to apply wrappers to flatten the Dict observation space for SB3:
+
 ```python
-import gymnasium as gym
+import eldengym
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
-import eldengym
+
+# Create environment with wrappers
+def make_env():
+    env = eldengym.make("Margit-v0", launch_game=False)
+
+    # Apply preprocessing wrappers
+    env = eldengym.DictResizeFrame(env, width=84, height=84)
+    env = eldengym.DictGrayscaleFrame(env)
+    env = eldengym.DictFrameStack(env, num_stack=4)
+    env = eldengym.NormalizeMemoryAttributes(env)
+
+    # TODO: Add FlattenDictObservation wrapper for SB3 compatibility
+    return env
 
 # Create vectorized environment
-env = DummyVecEnv([lambda: gym.make("EldenGym-v0", scenario_name="margit")])
+env = DummyVecEnv([make_env])
 
 # Initialize PPO agent
 model = PPO(
-    "CnnPolicy",  # Use CNN for image observations
+    "MultiInputPolicy",  # Use MultiInputPolicy for Dict observations
     env,
     verbose=1,
     learning_rate=3e-4,
@@ -76,68 +95,90 @@ env.close()
 ## Custom Reward Function
 
 ```python
-def custom_reward(obs, info, terminated, truncated):
+import eldengym
+from eldengym.rewards import RewardFunction
+
+class AggressiveReward(RewardFunction):
     """Reward function that encourages aggressive play."""
-    reward = 0.0
 
-    # Reward for damaging the boss
-    if 'target_hp_delta' in info:
-        reward += info['target_hp_delta'] * 10.0
+    def calculate_reward(self, obs, info, prev_info):
+        reward = 0.0
 
-    # Penalty for taking damage
-    if 'player_hp_delta' in info:
-        reward += info['player_hp_delta'] * 5.0
+        if prev_info is None:
+            return 0.0
 
-    # Big bonus for winning
-    if terminated and info.get('target_hp', 0) <= 0:
-        reward += 1000.0
+        # Get current normalized HP values
+        hero_hp = info.get('normalized_hero_hp', 0)
+        npc_hp = info.get('normalized_npc_hp', 1)
 
-    # Penalty for dying
-    if terminated and info.get('player_hp', 0) <= 0:
-        reward -= 500.0
+        # Previous normalized HP values
+        prev_hero_hp = prev_info.get('normalized_hero_hp', hero_hp)
+        prev_npc_hp = prev_info.get('normalized_npc_hp', npc_hp)
 
-    return reward
+        # Reward for damaging the boss (HP delta is negative when damaged)
+        npc_damage = prev_npc_hp - npc_hp
+        if npc_damage > 0:
+            reward += npc_damage * 100.0
+
+        # Penalty for taking damage
+        hero_damage = prev_hero_hp - hero_hp
+        if hero_damage > 0:
+            reward -= hero_damage * 50.0
+
+        return reward
+
+    def check_termination(self, obs, info):
+        """End episode when player or boss dies."""
+        hero_hp = info.get('normalized_hero_hp', 1)
+        npc_hp = info.get('normalized_npc_hp', 1)
+
+        return hero_hp <= 0 or npc_hp <= 0
 
 # Use custom reward
-env = gym.make(
-    "EldenGym-v0",
-    scenario_name="margit",
-    reward_function=custom_reward
+env = eldengym.make(
+    "Margit-v0",
+    launch_game=False,
+    reward_function=AggressiveReward()
 )
 ```
 
-## Different Action Spaces
+## Action Space (MultiBinary)
 
-### Discrete Actions (Default)
+The environment uses MultiBinary action space where each element represents a key:
+
 ```python
-env = gym.make("EldenGym-v0", action_mode="discrete")
-# 9 actions: no-op, forward, backward, left, right, attack, dodge, lock-on, use-item
+env = eldengym.make("Margit-v0", launch_game=False)
+
+# Check the action keys
+print(f"Action keys: {env.action_keys}")
+# ['W', 'A', 'S', 'D', 'SPACE', 'E', 'Q', 'R']
+
+# Create action (each element is 0 or 1)
+action = [1, 0, 1, 0, 1, 0, 0, 0]  # Press W + S + SPACE simultaneously
+
+# Keys are toggled intelligently - only changed when state differs
+obs, reward, terminated, truncated, info = env.step(action)
 ```
 
-### Multi-Binary Actions
-```python
-env = gym.make("EldenGym-v0", action_mode="multi_binary")
-# Binary vector: [forward, backward, left, right, attack, dodge, lock-on, use-item]
-# Can combine actions: [1, 0, 1, 0, 1, 0, 0, 0] = forward + left + attack
-```
-
-### Continuous Actions
-```python
-env = gym.make("EldenGym-v0", action_mode="continuous")
-# Continuous control (advanced use)
-```
+Keys are configured in `keybinds.json` and can be customized per environment.
 
 ## Environment Options
 
 ```python
-env = gym.make(
-    "EldenGym-v0",
-    scenario_name="margit",           # Boss scenario
-    action_mode="discrete",           # Action space type
-    frame_skip=4,                     # Skip frames (like Atari)
-    game_speed=1.0,                   # Game speed multiplier
-    max_step=1000,                    # Max steps per episode
-    config_filepath="ER_1_16_1.toml", # Game config
+env = eldengym.make(
+    "Margit-v0",                      # Registered environment
+    launch_game=False,                 # Don't launch if game already running
+    memory_attributes=[                # Memory values to poll
+        "HeroHp", "HeroMaxHp",
+        "NpcHp", "NpcMaxHp",
+        "HeroAnimId", "NpcAnimId"
+    ],
+    frame_format="jpeg",               # Frame format ('jpeg' or 'raw')
+    frame_quality=85,                  # JPEG quality (1-100)
+    max_steps=1000,                    # Max steps per episode
+    save_file_name="margit.sl2",       # Backup save to copy on reset
+    save_file_dir=r"C:\...\EldenRing\...",  # Save file directory
+    reward_function=eldengym.ScoreDeltaReward(),  # Reward calculator
 )
 ```
 
@@ -145,6 +186,7 @@ env = gym.make(
 
 ```python
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
+import eldengym
 
 # Save model checkpoints
 checkpoint_callback = CheckpointCallback(
@@ -153,8 +195,12 @@ checkpoint_callback = CheckpointCallback(
     name_prefix="margit_model"
 )
 
-# Evaluate periodically
-eval_env = gym.make("EldenGym-v0", scenario_name="margit")
+# Create evaluation environment
+eval_env = eldengym.make("Margit-v0", launch_game=False)
+# Apply same wrappers as training env
+eval_env = eldengym.DictResizeFrame(eval_env, 84, 84)
+eval_env = eldengym.DictGrayscaleFrame(eval_env)
+
 eval_callback = EvalCallback(
     eval_env,
     best_model_save_path="./best_model/",

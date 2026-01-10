@@ -163,7 +163,7 @@ class EldenClient(SiphonClient):
         launch_response = self.execute_command(
             "start_protected_game.exe",
             args=None,
-            working_directory="C:\Program Files (x86)\Steam\steamapps\common\ELDEN RING\Game",
+            working_directory=r"C:\Program Files (x86)\Steam\steamapps\common\ELDEN RING\Game",
         )
         if not launch_response.get("success", False):
             raise RuntimeError(

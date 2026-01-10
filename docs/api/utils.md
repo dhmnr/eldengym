@@ -2,9 +2,9 @@
 
 Helper functions and utilities for EldenGym.
 
-## Configuration Parsing
+## File Path Resolution
 
-::: eldengym.utils.parse_config_file
+::: eldengym.utils.resolve_file_path
     options:
       show_source: true
       heading_level: 3
@@ -12,113 +12,73 @@ Helper functions and utilities for EldenGym.
 ### Example
 
 ```python
-from eldengym.utils import parse_config_file
+from eldengym.utils import resolve_file_path
 
-# Parse a TOML config file
-process_name, window_name, attributes = parse_config_file(
-    "eldengym/files/configs/ER_1_16_1.toml"
-)
+# Resolve a file path relative to the package
+config_path = resolve_file_path("files/Margit-v0/er_siphon_config.toml")
+print(f"Resolved path: {config_path}")
 
-print(f"Process: {process_name}")
-print(f"Window: {window_name}")
-print(f"Attributes: {len(attributes)}")
-
-# Inspect an attribute
-attr = attributes[0]
-print(f"Name: {attr['name']}")
-print(f"Type: {attr['type']}")
-print(f"Pattern: {attr['pattern']}")
-print(f"Offsets: {attr['offsets']}")
+# Works with absolute paths too
+abs_path = resolve_file_path("/absolute/path/to/config.toml")
+print(f"Absolute path: {abs_path}")
 ```
 
-### Config File Format
+This utility ensures file paths work correctly whether:
+- EldenGym is installed as a package
+- Running from the project root
+- Using relative or absolute paths
 
-TOML configuration files define the game process and memory attributes:
+### Use Cases
 
-```toml
-[process_info]
-name = "eldenring.exe"
-window_name = "ELDEN RING"
-
-[attributes.HeroHp]
-pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
-offsets = [0x10EF8, 0x0, 0x190, 0x0, 0x138]
-type = "int"
-
-[attributes.HeroMaxHp]
-pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
-offsets = [0x10EF8, 0x0, 0x190, 0x0, 0x13C]
-type = "int"
-
-[attributes.HeroPosX]
-pattern = "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F 48 39 88"
-offsets = [0x10EF8, 0x0, 0x190, 0x68]
-type = "float"
-
-[attributes.CustomArray]
-pattern = "some pattern"
-offsets = [0x1000, 0x20]
-type = "array"
-length = 16  # For array types
-method = ""   # Optional method
-```
-
-### Attribute Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | str | Attribute identifier |
-| `pattern` | str | Memory scan pattern (AOB) |
-| `offsets` | list[int] | Pointer chain offsets |
-| `type` | str | Data type: "int", "float", "array" |
-| `length` | int | Length for array types (optional) |
-| `method` | str | Access method (optional) |
-
-### Pattern Syntax
-
-Memory patterns use IDA/x64dbg style with `??` for wildcards:
-
-```
-48 8B 05 ?? ?? ?? ?? 48 85 C0 74 0F
-```
-
-- Fixed bytes: `48`, `8B`, `05`
-- Wildcards: `??` (matches any byte)
-
-## Return Values
-
-### parse_config_file()
-
-**Returns:**
-- `process_name` (str): Name of the target process
-- `process_window_name` (str): Window title of the process
-- `attributes` (list[dict]): List of memory attributes
-
-Each attribute dict contains:
+**Loading configuration files:**
 ```python
-{
-    'name': str,
-    'pattern': str,
-    'offsets': list[int],
-    'type': str,
-    'length': int,
-    'method': str,
-}
+from eldengym.utils import resolve_file_path
+
+# Resolve keybinds file
+keybinds_path = resolve_file_path("files/Margit-v0/keybinds.json")
+
+# Load the file
+with open(keybinds_path, 'r') as f:
+    keybinds = json.load(f)
 ```
 
-## Error Handling
-
+**Finding scenario files:**
 ```python
-from eldengym.utils import parse_config_file
+from eldengym.utils import resolve_file_path
 
-try:
-    process_name, window_name, attributes = parse_config_file("config.toml")
-except FileNotFoundError:
-    print("Config file not found!")
-except ValueError as e:
-    print(f"Invalid config format: {e}")
+# Get scenario directory
+scenario_dir = resolve_file_path("files/Margit-v0")
+
+# List all files in the scenario
+for file in scenario_dir.glob("*"):
+    print(file.name)
 ```
 
-Possible errors:
-- `FileNotFoundError`: Config file doesn't exist
-- `ValueError`: Missing required sections or malformed TOML
+## Configuration Files
+
+EldenGym uses TOML configuration files for the Siphon server. These are handled by `pysiphon`:
+
+**File Structure:**
+```
+eldengym/files/
+├── Margit-v0/
+│   ├── er_siphon_config.toml  # Siphon memory configuration
+│   └── keybinds.json           # Key bindings
+└── (other scenarios)
+```
+
+**Loading configs:**
+```python
+import eldengym
+
+# Configs are automatically resolved when using make()
+env = eldengym.make("Margit-v0")
+
+# Or manually with EldenClient
+from eldengym.client import EldenClient
+
+client = EldenClient()
+client.load_config_from_file("files/Margit-v0/er_siphon_config.toml")
+```
+
+**Note:** Configuration parsing is now handled by `pysiphon.SiphonClient.set_process_config()`, which reads TOML files directly. EldenGym no longer parses TOML files internally.
