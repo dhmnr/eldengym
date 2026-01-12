@@ -18,7 +18,7 @@ register(
     entry_point=EldenGymEnv,
     kwargs={
         "scenario_name": "Margit-v0",
-        "keybinds_filepath": str(FILES_DIR / "Margit-v0" / "keybinds.json"),
+        "keybinds_filepath": str(FILES_DIR / "Margit-v0" / "keybinds_v2.json"),
         "siphon_config_filepath": str(
             FILES_DIR / "Margit-v0" / "er_siphon_config.toml"
         ),

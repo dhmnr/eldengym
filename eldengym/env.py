@@ -14,7 +14,7 @@ class EldenGymEnv(gym.Env):
 
     Args:
         scenario_name (str): Boss scenario name
-        keybinds_filepath (str): Path to keybinds JSON file
+        keybinds_filepath (str): Path to keybinds JSON file (v2 format: action → keys)
         siphon_config_filepath (str): Path to siphon TOML config
         memory_attributes (list[str]): List of memory attribute names to include in observation.
             Default: ["HeroHp", "HeroMaxHp", "NpcHp", "NpcMaxHp", "HeroAnimId", "NpcAnimId"]
@@ -29,6 +29,8 @@ class EldenGymEnv(gym.Env):
             (e.g., "margit_checkpoint.sl2"). If None, no save file copying occurs.
         save_file_dir (str, optional): Directory containing save files. Required if
             save_file_name is provided. Typically: %APPDATA%/EldenRing/<steam_id>/
+        use_device (str): Preferred input device - 'key' for keyboard (default) or 'mouse'.
+            When 'mouse' is selected, uses mouse binding if available, otherwise falls back to keyboard.
     """
 
     def __init__(
@@ -45,6 +47,7 @@ class EldenGymEnv(gym.Env):
         launch_game=True,
         save_file_name=None,
         save_file_dir=None,
+        use_device="key",
     ):
         super().__init__()
 
@@ -58,6 +61,7 @@ class EldenGymEnv(gym.Env):
         self.frame_quality = frame_quality
         self.save_file_name = save_file_name
         self.save_file_dir = save_file_dir
+        self.use_device = use_device
 
         # Memory attributes to poll (configurable, not hardcoded)
         self.memory_attributes = memory_attributes or [
@@ -69,17 +73,31 @@ class EldenGymEnv(gym.Env):
             "NpcAnimId",
         ]
 
-        # Load keybinds
+        # Load keybinds (v2 format: action → keys with index)
         with open(self.keybinds_filepath, "r") as f:
             keybinds_data = json.load(f)
-            self.keybinds = keybinds_data["keybinds"]
+            self._action_bindings = keybinds_data["actions"]
 
-        # Create action space (multi-binary for all keys)
-        self.action_keys = list(self.keybinds.keys())
+        # Sort actions by index to ensure consistent ordering
+        sorted_actions = sorted(
+            self._action_bindings.items(), key=lambda x: x[1]["index"]
+        )
+
+        # Build action-to-key mapping based on use_device preference
+        self._action_to_key = {}
+        for action, bindings in sorted_actions:
+            if self.use_device == "mouse" and "mouse" in bindings:
+                self._action_to_key[action] = bindings["mouse"]
+            else:
+                self._action_to_key[action] = bindings["key"]
+
+        # Create action space (multi-binary for all semantic actions, sorted by index)
+        self.action_keys = [action for action, _ in sorted_actions]
         self.action_space = gym.spaces.MultiBinary(len(self.action_keys))
 
-        # Track current key states for toggling
-        self._key_states = {key: False for key in self.action_keys}
+        # Track current key states for toggling (using actual keys, not actions)
+        self._active_keys = set(self._action_to_key.values())
+        self._key_states = {key: False for key in self._active_keys}
 
         # Frame stream handle
         self._stream_handle = None
@@ -143,7 +161,6 @@ class EldenGymEnv(gym.Env):
         # Decode frame from protobuf FrameData object
         if frame_data is not None:
             import cv2
-            import numpy as np
 
             # Extract JPEG bytes from protobuf
             jpeg_bytes = frame_data.data
@@ -188,11 +205,14 @@ class EldenGymEnv(gym.Env):
         """
         Toggle keys based on multi-binary action and current key states.
 
+        Translates semantic actions to actual keyboard/mouse keys.
+
         Args:
-            action: Multi-binary array indicating desired key states
+            action: Multi-binary array indicating desired action states
         """
         for i, desired_state in enumerate(action):
-            key = self.action_keys[i]
+            semantic_action = self.action_keys[i]
+            key = self._action_to_key[semantic_action]
             current_state = self._key_states[key]
             new_state = bool(desired_state)
 
@@ -203,8 +223,8 @@ class EldenGymEnv(gym.Env):
 
     def _release_all_keys(self):
         """Release all currently pressed keys."""
-        for key, is_pressed in self._key_states.items():
-            if is_pressed:
+        for key in self._active_keys:
+            if self._key_states.get(key, False):
                 self.client.input_key_toggle(key, False)
                 self._key_states[key] = False
 
@@ -262,7 +282,8 @@ class EldenGymEnv(gym.Env):
         Execute one step with key toggling.
 
         Args:
-            action: Multi-binary array [0/1] for each key in self.action_keys
+            action: Multi-binary array [0/1] for each semantic action in self.action_keys
+                e.g., [1, 0, 0, 1, ...] to activate move_forward and dodge_roll/dash
 
         Returns:
             tuple: (observation, reward, terminated, truncated, info)

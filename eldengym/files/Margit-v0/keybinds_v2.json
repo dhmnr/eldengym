@@ -1,0 +1,60 @@
+{
+    "actions": {
+        "move_forward": {
+            "index": 0,
+            "key": "W"
+        },
+        "move_back": {
+            "index": 1,
+            "key": "S"
+        },
+        "move_left": {
+            "index": 2,
+            "key": "A"
+        },
+        "move_right": {
+            "index": 3,
+            "key": "D"
+        },
+        "dodge_roll/dash": {
+            "index": 4,
+            "key": "LEFT_SHIFT",
+            "mouse": "BUTTON5"
+        },
+        "jump": {
+            "index": 5,
+            "key": "SPACE"
+        },
+        "crouch/standup": {
+            "index": 6,
+            "key": "C"
+        },
+        "lock_on": {
+            "index": 7,
+            "key": "B"
+        },
+        "attack": {
+            "index": 8,
+            "key": "P",
+            "mouse": "LEFT"
+        },
+        "strong_attack": {
+            "index": 9,
+            "key": "L"
+        },
+        "skill": {
+            "index": 10,
+            "key": "F"
+        },
+        "use_item": {
+            "index": 11,
+            "key": "R"
+        },
+        "event_action": {
+            "index": 12,
+            "key": "E"
+        }
+    },
+    "description": "Semantic action to key mapping for Elden Ring gameplay. 'index' is MultiBinary position, 'key' is primary keyboard binding, 'mouse' is backup mouse/alternate binding.",
+    "version": "2.0"
+}
