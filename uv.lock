@@ -715,7 +715,7 @@ wheels = [
 
 [[package]]
 name = "eldengym"
-version = "0.3.1"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
@@ -755,7 +755,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "opencv-python", specifier = ">=4.11.0.86" },
     { name = "pillow", specifier = ">=11.3.0" },
-    { name = "pysiphon", specifier = ">=1.1.0" },
+    { name = "pysiphon", specifier = ">=1.2.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -2529,7 +2529,7 @@ wheels = [
 
 [[package]]
 name = "pysiphon"
-version = "1.1.0"
+version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -2538,9 +2538,9 @@ dependencies = [
     { name = "pillow" },
     { name = "tomli" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d0/df/5c0a44f1742a8a78562472091579701212a8d85efdfee71e8dc673278497/pysiphon-1.1.0.tar.gz", hash = "sha256:b0b17620ce0eb50d25a971e1c0b4dab3b3a26b79db7697885962c5a31e362554", size = 24654, upload-time = "2025-12-17T06:49:41.678Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a4/2f/a6fd3b6e11344241174ab5079a5d422d238dda7cae1a39dce73637a625b2/pysiphon-1.2.0.tar.gz", hash = "sha256:fac45343311502813ed8489ff36a596464c3a5a1f2e166803b870c19444f51b2", size = 24696, upload-time = "2026-01-19T05:46:07.866Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/99/bb/7e9c72ff236d871d316c97cc66cb14b2e7b337d5b49279f0c0f8edcc0ac9/pysiphon-1.1.0-py3-none-any.whl", hash = "sha256:bf99b6cb54af5aa85679315bba885205f44b98d410cbce41de40f924f4094370", size = 24534, upload-time = "2025-12-17T06:49:40.432Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/6b/467f615120df4b5623f3468e370a29f71537a648beec1f300ae720d657ca/pysiphon-1.2.0-py3-none-any.whl", hash = "sha256:d85d1e2d4887aa0f71ec21b127136870b7a149a2114d84e9ad85950dae129e66", size = 24584, upload-time = "2026-01-19T05:46:06.841Z" },
 ]
 
 [[package]]
