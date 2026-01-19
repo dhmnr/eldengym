@@ -48,6 +48,8 @@ Issues = "https://github.com/dhmnr/eldengym/issues"
 dev = [
     "pre-commit>=4.0.1",
     "ruff>=0.8.0",
+    "scikit-learn>=1.7.2",
+    "shapely>=2.1.2",
 ]
 test = [
     "pytest>=8.0.0",

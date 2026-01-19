@@ -73,6 +73,31 @@ class EldenGymEnv(gym.Env):
             "NpcAnimId",
         ]
 
+        # Coordinate attributes (always polled for real coords computation)
+        self._coord_attributes = [
+            "HeroGlobalPosX",
+            "HeroGlobalPosY",
+            "HeroGlobalPosZ",
+            "HeroLocalPosX",
+            "HeroLocalPosY",
+            "HeroLocalPosZ",
+            "NpcGlobalPosX",  # Actually local coords, needs transform
+            "NpcGlobalPosY",
+            "NpcGlobalPosZ",
+        ]
+
+        # Real coord attribute names (added to obs)
+        self._real_coord_attrs = [
+            "player_x",
+            "player_y",
+            "player_z",
+            "boss_x",
+            "boss_y",
+            "boss_z",
+            "dist_to_boss",
+            "boss_z_relative",
+        ]
+
         # Load keybinds (v2 format: action → keys with index)
         with open(self.keybinds_filepath, "r") as f:
             keybinds_data = json.load(f)
@@ -196,10 +221,79 @@ class EldenGymEnv(gym.Env):
                 )
                 memory_data[attr_name] = 0
 
+        # Get coordinate attributes for real coords computation
+        coord_data = {}
+        for attr_name in self._coord_attributes:
+            try:
+                response = self.client.get_attribute(attr_name)
+                if isinstance(response, dict):
+                    value = response.get("value", 0)
+                else:
+                    value = response
+                coord_data[attr_name] = value
+            except Exception:
+                coord_data[attr_name] = 0
+
+        # Compute real coordinates
+        real_coords = self._compute_real_coords(coord_data)
+
         # Combine into observation
-        obs = {"frame": frame, **memory_data}
+        obs = {"frame": frame, **memory_data, **real_coords}
 
         return obs
+
+    def _compute_real_coords(self, coord_data):
+        """
+        Compute real world coordinates from raw coordinate data.
+
+        Player uses HeroGlobalPos directly (truly global).
+        Boss uses transform: npc_local + (hero_global - hero_local).
+
+        Args:
+            coord_data: Dict with raw coordinate attributes
+
+        Returns:
+            Dict with player_x/y/z, boss_x/y/z, dist_to_boss, boss_z_relative
+        """
+        # Player coords (HeroGlobalPos is truly global)
+        player_x = coord_data.get("HeroGlobalPosX", 0)
+        player_y = coord_data.get("HeroGlobalPosY", 0)
+        player_z = coord_data.get("HeroGlobalPosZ", 0)
+
+        # Compute local→global transform
+        hero_local_x = coord_data.get("HeroLocalPosX", 0)
+        hero_local_y = coord_data.get("HeroLocalPosY", 0)
+        hero_local_z = coord_data.get("HeroLocalPosZ", 0)
+
+        transform_x = player_x - hero_local_x
+        transform_y = player_y - hero_local_y
+        transform_z = player_z - hero_local_z
+
+        # Boss coords (NpcGlobalPos is actually local, apply transform)
+        npc_local_x = coord_data.get("NpcGlobalPosX", 0)
+        npc_local_y = coord_data.get("NpcGlobalPosY", 0)
+        npc_local_z = coord_data.get("NpcGlobalPosZ", 0)
+
+        boss_x = npc_local_x + transform_x
+        boss_y = npc_local_y + transform_y
+        boss_z = npc_local_z + transform_z
+
+        # Derived values
+        dx = player_x - boss_x
+        dy = player_y - boss_y
+        dist_to_boss = np.sqrt(dx * dx + dy * dy)  # XY distance only
+        boss_z_relative = boss_z - player_z
+
+        return {
+            "player_x": player_x,
+            "player_y": player_y,
+            "player_z": player_z,
+            "boss_x": boss_x,
+            "boss_y": boss_y,
+            "boss_z": boss_z,
+            "dist_to_boss": dist_to_boss,
+            "boss_z_relative": boss_z_relative,
+        }
 
     def _toggle_keys(self, action):
         """
@@ -263,11 +357,19 @@ class EldenGymEnv(gym.Env):
                         shape=obs["frame"].shape,
                         dtype=np.uint8,
                     ),
+                    # User-configured memory attributes
                     **{
                         attr: gym.spaces.Box(
                             low=-np.inf, high=np.inf, shape=(), dtype=np.float32
                         )
                         for attr in self.memory_attributes
+                    },
+                    # Real coordinate attributes (always included)
+                    **{
+                        attr: gym.spaces.Box(
+                            low=-np.inf, high=np.inf, shape=(), dtype=np.float32
+                        )
+                        for attr in self._real_coord_attrs
                     },
                 }
             )
@@ -342,6 +444,18 @@ class EldenGymEnv(gym.Env):
 
         if "NpcAnimId" in obs:
             info["boss_animation"] = obs["NpcAnimId"]
+
+        # Add real coords as tuples for convenience (debugging)
+        info["player_xyz"] = (
+            obs.get("player_x", 0),
+            obs.get("player_y", 0),
+            obs.get("player_z", 0),
+        )
+        info["boss_xyz"] = (
+            obs.get("boss_x", 0),
+            obs.get("boss_y", 0),
+            obs.get("boss_z", 0),
+        )
 
         return info
 

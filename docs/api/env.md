@@ -105,21 +105,44 @@ Keys are toggled intelligently - only changed when the action differs from curre
 
 ### Observation Space
 
-The environment uses **Dict** observation space with frame and memory attributes:
+The environment uses **Dict** observation space with frame, memory attributes, and computed real coordinates:
 
 ```python
 env.observation_space  # Dict({
 #   'frame': Box(0, 255, (H, W, 3), uint8),
+#
+#   # Memory attributes (configurable)
 #   'HeroHp': Box(-inf, inf, (), float32),
 #   'HeroMaxHp': Box(-inf, inf, (), float32),
 #   'NpcHp': Box(-inf, inf, (), float32),
 #   'NpcMaxHp': Box(-inf, inf, (), float32),
 #   'HeroAnimId': Box(-inf, inf, (), float32),
 #   'NpcAnimId': Box(-inf, inf, (), float32),
+#
+#   # Real coordinates (computed automatically)
+#   'player_x': Box(-inf, inf, (), float32),  # Player global X
+#   'player_y': Box(-inf, inf, (), float32),  # Player global Y
+#   'player_z': Box(-inf, inf, (), float32),  # Player global Z
+#   'boss_x': Box(-inf, inf, (), float32),    # Boss global X
+#   'boss_y': Box(-inf, inf, (), float32),    # Boss global Y
+#   'boss_z': Box(-inf, inf, (), float32),    # Boss global Z
+#   'dist_to_boss': Box(0, inf, (), float32), # 2D distance to boss
+#   'boss_z_relative': Box(-inf, inf, (), float32),  # Boss Z relative to player
 # })
 ```
 
 The memory attributes are configurable via the `memory_attributes` parameter.
+
+#### Real Coordinates
+
+The environment automatically computes global coordinates for both player and boss using the local-to-global transform:
+
+- **Player coordinates** (`player_x`, `player_y`, `player_z`): Directly from `HeroGlobalPos`
+- **Boss coordinates** (`boss_x`, `boss_y`, `boss_z`): Computed as `NpcLocalPos + (HeroGlobalPos - HeroLocalPos)`
+- **Distance** (`dist_to_boss`): 2D Euclidean distance (ignores Z)
+- **Relative Z** (`boss_z_relative`): `boss_z - player_z` (positive = boss above player)
+
+This transform is necessary because the NPC coordinate system resets at map boundaries, while the Hero global position remains stable.
 
 ## Info Dictionary
 

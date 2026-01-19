@@ -115,6 +115,121 @@ for _ in range(1000):
     shaped_reward = reward + damage_penalty
 ```
 
+#### AnimFrameWrapper
+
+Track boss animation ID and elapsed frames since animation changed. Useful for learning animation-based dodge timing.
+
+```python
+from eldengym.wrappers import AnimFrameWrapper
+
+env = eldengym.make("Margit-v0", ...)
+env = AnimFrameWrapper(env)
+```
+
+**Parameters:**
+
+- `anim_id_key` (str): Key for animation ID in obs. Default: `'NpcAnimId'`
+
+**Observation additions:**
+
+- `obs["boss_anim_id"]` - Current boss animation ID
+- `obs["elapsed_frames"]` - Number of frames since animation changed
+
+#### SDFObsWrapper
+
+Add Signed Distance Field (SDF) observations for arena boundary awareness. Requires an `ArenaBoundary` instance and player coordinates in obs (`player_x`, `player_y` from EldenGymEnv).
+
+```python
+from eldengym import SDFObsWrapper, ArenaBoundary
+
+boundary = ArenaBoundary.load("arena_boundary.json")
+env = eldengym.make("Margit-v0", ...)
+env = SDFObsWrapper(env, boundary=boundary, live_plot=True)
+```
+
+**Parameters:**
+
+- `boundary` (ArenaBoundary): Arena boundary instance with `query_sdf(x, y)` method
+- `live_plot` (bool): Enable live visualization of positions and SDF. Default: `False`
+
+**Observation additions:**
+
+- `obs["sdf_value"]` - Signed distance to boundary (negative = inside arena)
+- `obs["sdf_normal_x"]` - X component of normal vector pointing to boundary
+- `obs["sdf_normal_y"]` - Y component of normal vector pointing to boundary
+
+#### OOBSafetyWrapper
+
+Out-of-bounds detection and recovery via teleportation. Uses a soft/hard boundary system where the soft boundary tracks last safe position and the hard boundary triggers teleport.
+
+```python
+from eldengym import OOBSafetyWrapper, ArenaBoundary
+
+boundary = ArenaBoundary.load("arena_boundary.json")
+env = eldengym.make("Margit-v0", ...)
+env = OOBSafetyWrapper(env, boundary=boundary, soft_margin=3.0, hard_margin=0.0)
+```
+
+**Parameters:**
+
+- `boundary` (ArenaBoundary): Arena boundary instance
+- `soft_margin` (float): Distance inside the hard boundary for safe zone. Default: `3.0`
+- `hard_margin` (float): Distance to extend/shrink hard boundary. Default: `0.0`
+  - Positive values extend the boundary outward (more permissive)
+  - Negative values shrink the boundary inward (more restrictive)
+
+**Boundary thresholds:**
+
+- Hard boundary: `sdf_value < hard_margin`
+- Soft boundary: `sdf_value < (hard_margin - soft_margin)`
+
+**Info dict additions:**
+
+- `info["oob_detected"]` - True if player crossed hard boundary
+- `info["teleported"]` - True if teleport was triggered
+- `info["last_safe_xyz"]` - Last known safe position (inside soft boundary)
+
+**Example configurations:**
+
+```python
+# Default: hard at polygon edge, soft 3 units inside
+env = OOBSafetyWrapper(env, boundary, soft_margin=3.0, hard_margin=0.0)
+
+# Hard extended 2 units out, soft still 3 units inside hard
+env = OOBSafetyWrapper(env, boundary, soft_margin=3.0, hard_margin=2.0)
+```
+
+### Combining Wrappers for Dodge Policy
+
+A common pattern for training dodge policies with full wrapper stack:
+
+```python
+from eldengym import (
+    ArenaBoundary,
+    HPRefundWrapper,
+    AnimFrameWrapper,
+    SDFObsWrapper,
+    OOBSafetyWrapper,
+)
+
+boundary = ArenaBoundary.load("arena_boundary.json")
+
+env = eldengym.make("Margit-v0", host="192.168.48.1:50051")
+
+# Apply wrappers (order matters!)
+env = HPRefundWrapper(env, refund_player=True, refund_boss=False)
+env = AnimFrameWrapper(env)
+env = SDFObsWrapper(env, boundary=boundary, live_plot=True)
+env = OOBSafetyWrapper(env, boundary=boundary, soft_margin=3.0, hard_margin=0.0)
+
+# Now obs contains:
+# - player_x, player_y, player_z, boss_x, boss_y, boss_z (from base env)
+# - dist_to_boss, boss_z_relative (from base env)
+# - boss_anim_id, elapsed_frames (from AnimFrameWrapper)
+# - sdf_value, sdf_normal_x, sdf_normal_y (from SDFObsWrapper)
+# And info contains damage tracking and OOB detection
+```
+
 ### Legacy Wrappers
 
 These wrappers work with simple array observations (not Dict spaces).

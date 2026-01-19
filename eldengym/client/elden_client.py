@@ -364,19 +364,24 @@ class EldenClient(SiphonClient):
 
     def teleport(self, x, y, z):
         """
-        Teleport the player to the given coordinates.
+        Teleport the player to the given global coordinates.
+
+        Takes target global coords, computes delta, writes to local coords.
 
         Args:
-            x (float): Target X coordinate
-            y (float): Target Y coordinate
-            z (float): Target Z coordinate
+            x (float): Target global X coordinate
+            y (float): Target global Y coordinate
+            z (float): Target global Z coordinate
         """
-        # FIXME: Close range teleport, need to check MapId for long range teleport.
         local_x, local_y, local_z = self.local_player_coords
         global_x, global_y, global_z = self.global_player_coords
         self.set_attribute("HeroLocalPosX", local_x + (x - global_x), "float")
         self.set_attribute("HeroLocalPosY", local_y + (y - global_y), "float")
         self.set_attribute("HeroLocalPosZ", local_z + (z - global_z), "float")
+
+    def teleport_to(self, x, y, z):
+        """Alias for teleport(). Teleport player to global coordinates."""
+        self.teleport(x, y, z)
 
     def set_game_speed(self, speed):
         """

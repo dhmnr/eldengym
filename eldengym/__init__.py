@@ -19,7 +19,11 @@ from .wrappers import (
     DictGrayscaleFrame,
     NormalizeMemoryAttributes,
     HPRefundWrapper,
+    AnimFrameWrapper,
+    SDFObsWrapper,
+    OOBSafetyWrapper,
 )
+from .arena_boundary import ArenaBoundary, BoundaryDistances
 from .registry import make, register, list_envs
 
 # Import envs module to trigger environment registrations
@@ -42,6 +46,11 @@ __all__ = [
     "DictGrayscaleFrame",
     "NormalizeMemoryAttributes",
     "HPRefundWrapper",
+    "AnimFrameWrapper",
+    "SDFObsWrapper",
+    "OOBSafetyWrapper",
+    "ArenaBoundary",
+    "BoundaryDistances",
     "make",
     "register",
     "list_envs",

@@ -353,7 +353,7 @@ class HPRefundWrapper(gym.Wrapper):
 
                 # Only refund if damage was taken
                 if player_damage > 0:
-                    self.env.client.set_attribute(self.player_hp_attr, int(max_hp), "int")
+                    self.unwrapped.client.set_attribute(self.player_hp_attr, int(max_hp), "int")
                     self._prev_player_hp = max_hp
                 else:
                     self._prev_player_hp = current_hp
@@ -375,9 +375,363 @@ class HPRefundWrapper(gym.Wrapper):
 
                 # Only refund if damage was dealt
                 if boss_damage > 0:
-                    self.env.client.set_attribute(self.boss_hp_attr, int(max_hp), "int")
+                    self.unwrapped.client.set_attribute(self.boss_hp_attr, int(max_hp), "int")
                     self._prev_boss_hp = max_hp
                 else:
                     self._prev_boss_hp = current_hp
+
+        return obs, reward, terminated, truncated, info
+
+
+class AnimFrameWrapper(gym.Wrapper):
+    """
+    Track boss animation ID and elapsed frames with same animation.
+
+    Adds to observation:
+    - boss_anim_id: Current NpcAnimId
+    - elapsed_frames: Number of frames since animation changed
+
+    Args:
+        env: EldenGym environment
+        anim_id_key: Key for animation ID in obs (default: 'NpcAnimId')
+    """
+
+    def __init__(self, env, anim_id_key="NpcAnimId"):
+        super().__init__(env)
+        self.anim_id_key = anim_id_key
+        self._prev_anim_id = None
+        self._elapsed_frames = 0
+
+        # Extend observation space
+        if hasattr(self.env, 'observation_space') and self.env.observation_space is not None:
+            self._extend_obs_space()
+
+    def _extend_obs_space(self):
+        """Extend observation space with new attributes."""
+        if isinstance(self.observation_space, gym.spaces.Dict):
+            new_spaces = dict(self.observation_space.spaces)
+            new_spaces["boss_anim_id"] = gym.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(), dtype=np.float32
+            )
+            new_spaces["elapsed_frames"] = gym.spaces.Box(
+                low=0, high=np.inf, shape=(), dtype=np.float32
+            )
+            self.observation_space = gym.spaces.Dict(new_spaces)
+
+    def reset(self, **kwargs):
+        obs, info = self.env.reset(**kwargs)
+
+        # Extend obs space on first reset if needed
+        if not hasattr(self, '_obs_space_extended'):
+            self._extend_obs_space()
+            self._obs_space_extended = True
+
+        # Initialize tracking
+        self._prev_anim_id = obs.get(self.anim_id_key, 0)
+        self._elapsed_frames = 0
+
+        # Add to obs
+        obs["boss_anim_id"] = self._prev_anim_id
+        obs["elapsed_frames"] = self._elapsed_frames
+
+        return obs, info
+
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+
+        current_anim_id = obs.get(self.anim_id_key, 0)
+
+        # Check if animation changed
+        if current_anim_id != self._prev_anim_id:
+            self._elapsed_frames = 0
+            self._prev_anim_id = current_anim_id
+        else:
+            self._elapsed_frames += 1
+
+        # Add to obs
+        obs["boss_anim_id"] = current_anim_id
+        obs["elapsed_frames"] = self._elapsed_frames
+
+        return obs, reward, terminated, truncated, info
+
+
+class SDFObsWrapper(gym.Wrapper):
+    """
+    Add SDF (Signed Distance Field) observations for arena boundary awareness.
+
+    Adds to observation:
+    - sdf_value: Signed distance to boundary (negative = inside)
+    - sdf_normal_x: X component of normal vector pointing to boundary
+    - sdf_normal_y: Y component of normal vector pointing to boundary
+
+    Requires player coordinates in obs (player_x, player_y from EldenGymEnv).
+
+    Args:
+        env: EldenGym environment with real coords
+        boundary: ArenaBoundary instance with query_sdf(x, y) method
+        live_plot: Enable live visualization of positions and SDF
+    """
+
+    def __init__(self, env, boundary, live_plot=False):
+        super().__init__(env)
+        self.boundary = boundary
+        self.live_plot = live_plot
+
+        # Live plot state
+        self._fig = None
+        self._ax = None
+        self._player_marker = None
+        self._boss_marker = None
+        self._player_trail = None
+        self._boss_trail = None
+        self._player_trail_x = []
+        self._player_trail_y = []
+        self._boss_trail_x = []
+        self._boss_trail_y = []
+
+        # Extend observation space
+        if hasattr(self.env, 'observation_space') and self.env.observation_space is not None:
+            self._extend_obs_space()
+
+    def _extend_obs_space(self):
+        """Extend observation space with SDF attributes."""
+        if isinstance(self.observation_space, gym.spaces.Dict):
+            new_spaces = dict(self.observation_space.spaces)
+            new_spaces["sdf_value"] = gym.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(), dtype=np.float32
+            )
+            new_spaces["sdf_normal_x"] = gym.spaces.Box(
+                low=-1, high=1, shape=(), dtype=np.float32
+            )
+            new_spaces["sdf_normal_y"] = gym.spaces.Box(
+                low=-1, high=1, shape=(), dtype=np.float32
+            )
+            self.observation_space = gym.spaces.Dict(new_spaces)
+
+    def _init_live_plot(self):
+        """Initialize the live plot."""
+        import matplotlib.pyplot as plt
+
+        plt.ion()
+        self._fig, self._ax = plt.subplots(figsize=(10, 10))
+
+        # Plot SDF heatmap
+        x = np.linspace(self.boundary.x_min, self.boundary.x_max, self.boundary.nx)
+        y = np.linspace(self.boundary.y_min, self.boundary.y_max, self.boundary.ny)
+        self._ax.contourf(x, y, self.boundary.sdf.T, levels=30, cmap='RdBu_r', alpha=0.5)
+        self._ax.contour(x, y, self.boundary.sdf.T, levels=[0], colors='black', linewidths=2)
+
+        # Plot boundary polygon
+        poly_x, poly_y = self.boundary.polygon.exterior.xy
+        self._ax.plot(poly_x, poly_y, 'k-', linewidth=2, label='Boundary')
+
+        # Initialize markers and trails
+        self._player_marker, = self._ax.plot([], [], 'bo', markersize=12, label='Player', zorder=10)
+        self._boss_marker, = self._ax.plot([], [], 'ro', markersize=12, label='Boss', zorder=10)
+        self._player_trail, = self._ax.plot([], [], 'b-', linewidth=1, alpha=0.5)
+        self._boss_trail, = self._ax.plot([], [], 'r-', linewidth=1, alpha=0.5)
+
+        self._ax.set_xlabel('Y (SDF coords)')
+        self._ax.set_ylabel('-X (SDF coords)')
+        self._ax.set_title('Live Position Tracking with SDF')
+        self._ax.legend(loc='upper right')
+        self._ax.set_aspect('equal')
+        self._ax.grid(True, alpha=0.3)
+
+        plt.show(block=False)
+        plt.pause(0.01)
+
+    def _update_live_plot(self, obs):
+        """Update the live plot with current positions."""
+        if self._fig is None:
+            return
+
+        import matplotlib.pyplot as plt
+
+        player_x = obs.get("player_x", 0)
+        player_y = obs.get("player_y", 0)
+        boss_x = obs.get("boss_x", 0)
+        boss_y = obs.get("boss_y", 0)
+
+        # Transform to SDF coords (y, -x)
+        player_sdf_x = player_y
+        player_sdf_y = -player_x
+        boss_sdf_x = boss_y
+        boss_sdf_y = -boss_x
+
+        # Update trails
+        self._player_trail_x.append(player_sdf_x)
+        self._player_trail_y.append(player_sdf_y)
+        self._boss_trail_x.append(boss_sdf_x)
+        self._boss_trail_y.append(boss_sdf_y)
+
+        # Keep trail length limited
+        max_trail = 500
+        if len(self._player_trail_x) > max_trail:
+            self._player_trail_x = self._player_trail_x[-max_trail:]
+            self._player_trail_y = self._player_trail_y[-max_trail:]
+            self._boss_trail_x = self._boss_trail_x[-max_trail:]
+            self._boss_trail_y = self._boss_trail_y[-max_trail:]
+
+        # Update markers
+        self._player_marker.set_data([player_sdf_x], [player_sdf_y])
+        self._boss_marker.set_data([boss_sdf_x], [boss_sdf_y])
+        self._player_trail.set_data(self._player_trail_x, self._player_trail_y)
+        self._boss_trail.set_data(self._boss_trail_x, self._boss_trail_y)
+
+        self._fig.canvas.draw_idle()
+        self._fig.canvas.flush_events()
+
+    def reset(self, **kwargs):
+        obs, info = self.env.reset(**kwargs)
+
+        # Extend obs space on first reset if needed
+        if not hasattr(self, '_obs_space_extended'):
+            self._extend_obs_space()
+            self._obs_space_extended = True
+
+        # Initialize live plot on first reset
+        if self.live_plot and self._fig is None:
+            self._init_live_plot()
+
+        # Clear trails on reset
+        self._player_trail_x = []
+        self._player_trail_y = []
+        self._boss_trail_x = []
+        self._boss_trail_y = []
+
+        # Query SDF
+        obs = self._add_sdf_obs(obs)
+
+        # Update live plot
+        if self.live_plot:
+            self._update_live_plot(obs)
+
+        return obs, info
+
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+
+        # Query SDF
+        obs = self._add_sdf_obs(obs)
+
+        # Update live plot
+        if self.live_plot:
+            self._update_live_plot(obs)
+
+        return obs, reward, terminated, truncated, info
+
+    def _add_sdf_obs(self, obs):
+        """Add SDF observations to obs dict."""
+        player_x = obs.get("player_x", 0)
+        player_y = obs.get("player_y", 0)
+
+        # Query SDF - boundary uses (y, -x) convention from trace_paths
+        # The SDF was built with coords transformed as (global_y, -global_x)
+        sdf_x = player_y  # Map player_y to SDF x
+        sdf_y = -player_x  # Map -player_x to SDF y
+
+        sdf_value, normal_x, normal_y = self.boundary.query_sdf(sdf_x, sdf_y)
+
+        obs["sdf_value"] = sdf_value
+        obs["sdf_normal_x"] = normal_x
+        obs["sdf_normal_y"] = normal_y
+
+        return obs
+
+    def close(self):
+        """Close the live plot."""
+        if self._fig is not None:
+            import matplotlib.pyplot as plt
+            plt.close(self._fig)
+            self._fig = None
+        super().close()
+
+
+class OOBSafetyWrapper(gym.Wrapper):
+    """
+    Out-of-bounds detection and recovery via teleportation.
+
+    Uses soft/hard boundary system:
+    - Soft boundary: Tracks last safe position when inside
+    - Hard boundary: Triggers teleport to last safe position when crossed
+
+    Adds to info:
+    - oob_detected: True if player crossed hard boundary
+    - teleported: True if teleport was triggered
+    - last_safe_xyz: Last known safe position (inside soft boundary)
+
+    Requires player coordinates in obs (player_x, player_y, player_z from EldenGymEnv).
+
+    Args:
+        env: EldenGym environment with real coords
+        boundary: ArenaBoundary instance with is_inside(x, y) method
+        soft_margin: Distance inside the hard boundary for safe zone (default: 3.0)
+            - Always positive, represents how far inside the hard boundary
+        hard_margin: Distance to extend/shrink hard boundary (default: 0.0)
+            - Positive values extend the boundary outward (more permissive)
+            - Negative values shrink the boundary inward (more restrictive)
+    """
+
+    def __init__(self, env, boundary, soft_margin=3.0, hard_margin=0.0):
+        super().__init__(env)
+        self.boundary = boundary
+        self.soft_margin = soft_margin
+        self.hard_margin = hard_margin
+
+        # Last safe GLOBAL position (inside soft boundary)
+        self._last_safe_xyz = None
+
+    def reset(self, **kwargs):
+        obs, info = self.env.reset(**kwargs)
+
+        # Initialize safe position from current GLOBAL position
+        player_x = obs.get("player_x", 0)
+        player_y = obs.get("player_y", 0)
+        player_z = obs.get("player_z", 0)
+        self._last_safe_xyz = (player_x, player_y, player_z)
+
+        info["oob_detected"] = False
+        info["teleported"] = False
+        info["last_safe_xyz"] = self._last_safe_xyz
+
+        return obs, info
+
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+
+        # Get global coords for boundary check
+        player_x = obs.get("player_x", 0)
+        player_y = obs.get("player_y", 0)
+        player_z = obs.get("player_z", 0)
+
+        # Transform to SDF coordinates (y, -x)
+        sdf_x = player_y
+        sdf_y = -player_x
+
+        # Check boundaries
+        sdf_value = self.boundary.nearest_distance(sdf_x, sdf_y)
+        inside_hard = sdf_value < self.hard_margin  # Inside hard boundary (extended/shrunk by hard_margin)
+        inside_soft = sdf_value < (self.hard_margin - self.soft_margin)  # Inside soft boundary (soft_margin units inside hard)
+
+        oob_detected = not inside_hard
+        teleported = False
+
+        if inside_soft:
+            # Update safe position with current GLOBAL coords when inside soft boundary
+            self._last_safe_xyz = (player_x, player_y, player_z)
+
+        if oob_detected and self._last_safe_xyz is not None:
+            # Teleport to last safe GLOBAL position (teleport_to handles conversion)
+            safe_x, safe_y, safe_z = self._last_safe_xyz
+            self.unwrapped.client.teleport_to(safe_x, safe_y, safe_z)
+            teleported = True
+
+        info["oob_detected"] = oob_detected
+        info["teleported"] = teleported
+        info["last_safe_xyz"] = self._last_safe_xyz
+        info["sdf_value"] = sdf_value
+        info["inside_hard"] = inside_hard
+        info["inside_soft"] = inside_soft
 
         return obs, reward, terminated, truncated, info
