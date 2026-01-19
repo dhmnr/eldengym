@@ -18,6 +18,7 @@ from .wrappers import (
     DictResizeFrame,
     DictGrayscaleFrame,
     NormalizeMemoryAttributes,
+    HPRefundWrapper,
 )
 from .registry import make, register, list_envs
 
@@ -40,6 +41,7 @@ __all__ = [
     "DictResizeFrame",
     "DictGrayscaleFrame",
     "NormalizeMemoryAttributes",
+    "HPRefundWrapper",
     "make",
     "register",
     "list_envs",

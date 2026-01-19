@@ -280,3 +280,104 @@ class GrayscaleFrame(gym.ObservationWrapper):
 
         gray = cv2.cvtColor(obs, cv2.COLOR_RGB2GRAY)
         return np.expand_dims(gray, -1)
+
+
+class HPRefundWrapper(gym.Wrapper):
+    """
+    Refund player and/or boss HP after each step.
+
+    Useful for evaluation and data collection where you want to prevent
+    episode termination due to HP loss.
+
+    Tracks damage by comparing consecutive observations to avoid race
+    conditions with the refund timing.
+
+    Args:
+        env: EldenGym environment
+        refund_player: Whether to refund player HP (default: True)
+        refund_boss: Whether to refund boss HP (default: False)
+        player_hp_attr: Attribute name for player HP (default: 'HeroHp')
+        player_max_hp_attr: Attribute name for player max HP (default: 'HeroMaxHp')
+        boss_hp_attr: Attribute name for boss HP (default: 'NpcHp')
+        boss_max_hp_attr: Attribute name for boss max HP (default: 'NpcMaxHp')
+    """
+
+    def __init__(
+        self,
+        env,
+        refund_player=True,
+        refund_boss=False,
+        player_hp_attr="HeroHp",
+        player_max_hp_attr="HeroMaxHp",
+        boss_hp_attr="NpcHp",
+        boss_max_hp_attr="NpcMaxHp",
+    ):
+        super().__init__(env)
+        self.refund_player = refund_player
+        self.refund_boss = refund_boss
+        self.player_hp_attr = player_hp_attr
+        self.player_max_hp_attr = player_max_hp_attr
+        self.boss_hp_attr = boss_hp_attr
+        self.boss_max_hp_attr = boss_max_hp_attr
+
+        # Track previous HP to calculate damage delta
+        self._prev_player_hp = None
+        self._prev_boss_hp = None
+
+    def reset(self, **kwargs):
+        obs, info = self.env.reset(**kwargs)
+
+        # Initialize HP tracking from first observation
+        self._prev_player_hp = obs.get(self.player_hp_attr, 0)
+        self._prev_boss_hp = obs.get(self.boss_hp_attr, 0)
+
+        return obs, info
+
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+
+        # Track player damage using delta from previous HP
+        if self.refund_player:
+            max_hp = obs.get(self.player_max_hp_attr, 0)
+            current_hp = obs.get(self.player_hp_attr, 0)
+
+            if max_hp > 0:
+                # Calculate damage as drop from previous HP
+                if self._prev_player_hp is not None:
+                    player_damage = max(0, self._prev_player_hp - current_hp)
+                else:
+                    player_damage = 0
+
+                info["player_damage_taken"] = player_damage
+                info["player_damage_taken_normalized"] = player_damage / max_hp
+
+                # Only refund if damage was taken
+                if player_damage > 0:
+                    self.env.client.set_attribute(self.player_hp_attr, int(max_hp), "int")
+                    self._prev_player_hp = max_hp
+                else:
+                    self._prev_player_hp = current_hp
+
+        # Track boss damage using delta from previous HP
+        if self.refund_boss:
+            max_hp = obs.get(self.boss_max_hp_attr, 0)
+            current_hp = obs.get(self.boss_hp_attr, 0)
+
+            if max_hp > 0:
+                # Calculate damage as drop from previous HP
+                if self._prev_boss_hp is not None:
+                    boss_damage = max(0, self._prev_boss_hp - current_hp)
+                else:
+                    boss_damage = 0
+
+                info["boss_damage_dealt"] = boss_damage
+                info["boss_damage_dealt_normalized"] = boss_damage / max_hp
+
+                # Only refund if damage was dealt
+                if boss_damage > 0:
+                    self.env.client.set_attribute(self.boss_hp_attr, int(max_hp), "int")
+                    self._prev_boss_hp = max_hp
+                else:
+                    self._prev_boss_hp = current_hp
+
+        return obs, reward, terminated, truncated, info
