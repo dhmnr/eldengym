@@ -22,6 +22,7 @@ from .wrappers import (
     AnimFrameWrapper,
     SDFObsWrapper,
     OOBSafetyWrapper,
+    DodgePolicyRewardWrapper,
 )
 from .arena_boundary import ArenaBoundary, BoundaryDistances
 from .registry import make, register, list_envs
@@ -49,6 +50,7 @@ __all__ = [
     "AnimFrameWrapper",
     "SDFObsWrapper",
     "OOBSafetyWrapper",
+    "DodgePolicyRewardWrapper",
     "ArenaBoundary",
     "BoundaryDistances",
     "make",

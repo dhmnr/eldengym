@@ -735,3 +735,76 @@ class OOBSafetyWrapper(gym.Wrapper):
         info["inside_soft"] = inside_soft
 
         return obs, reward, terminated, truncated, info
+
+
+class DodgePolicyRewardWrapper(gym.Wrapper):
+    """
+    Reward shaping for dodge policy training.
+
+    Applies configurable penalties for:
+    - Taking damage (hit by boss)
+    - Dodging (to prevent spam)
+    - Being in danger zone (between soft and hard boundary)
+    - Crossing hard boundary (OOB/teleported)
+
+    Requires HPRefundWrapper and OOBSafetyWrapper to be applied first.
+
+    Args:
+        env: EldenGym environment with HPRefundWrapper and OOBSafetyWrapper
+        dodge_action_idx: Index of dodge action in action space
+        hit_penalty: Penalty for taking damage (default: -1.0)
+        dodge_penalty: Penalty per dodge to prevent spam (default: -0.01)
+        danger_zone_penalty: Penalty for being between soft/hard boundary (default: -0.1)
+        oob_penalty: Penalty for crossing hard boundary/teleport (default: -1.0)
+    """
+
+    def __init__(
+        self,
+        env,
+        dodge_action_idx: int,
+        hit_penalty: float = -1.0,
+        dodge_penalty: float = -0.01,
+        danger_zone_penalty: float = -0.1,
+        oob_penalty: float = -1.0,
+    ):
+        super().__init__(env)
+        self.dodge_action_idx = dodge_action_idx
+        self.hit_penalty = hit_penalty
+        self.dodge_penalty = dodge_penalty
+        self.danger_zone_penalty = danger_zone_penalty
+        self.oob_penalty = oob_penalty
+
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+
+        # Start with base reward (usually 0 or from underlying reward function)
+        shaped_reward = reward
+
+        # Penalty for taking damage
+        damage_taken = info.get("player_damage_taken", 0)
+        if damage_taken > 0:
+            shaped_reward += self.hit_penalty
+            info["reward_hit_penalty"] = self.hit_penalty
+
+        # Penalty for dodging (spam prevention)
+        if action[self.dodge_action_idx] == 1:
+            shaped_reward += self.dodge_penalty
+            info["reward_dodge_penalty"] = self.dodge_penalty
+
+        # Penalty for danger zone (between soft and hard boundary)
+        inside_hard = info.get("inside_hard", True)
+        inside_soft = info.get("inside_soft", True)
+        if inside_hard and not inside_soft:
+            shaped_reward += self.danger_zone_penalty
+            info["reward_danger_zone_penalty"] = self.danger_zone_penalty
+
+        # Penalty for OOB (crossed hard boundary, teleported)
+        teleported = info.get("teleported", False)
+        if teleported:
+            shaped_reward += self.oob_penalty
+            info["reward_oob_penalty"] = self.oob_penalty
+
+        info["reward_raw"] = reward
+        info["reward_shaped"] = shaped_reward
+
+        return obs, shaped_reward, terminated, truncated, info
