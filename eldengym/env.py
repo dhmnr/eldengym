@@ -18,6 +18,9 @@ class EldenGymEnv(gym.Env):
         siphon_config_filepath (str): Path to siphon TOML config
         memory_attributes (list[str]): List of memory attribute names to include in observation.
             Default: ["HeroHp", "HeroMaxHp", "NpcHp", "NpcMaxHp", "HeroAnimId", "NpcAnimId"]
+        actions (list[str], optional): List of action names to include in action space.
+            If None, all actions from keybinds file are used.
+            Example: ["move_forward", "move_back", "move_left", "move_right", "dodge_roll/dash"]
         host (str): Siphon server host. Default: 'localhost:50051'
         reward_function (RewardFunction): Custom reward function
         frame_format (str): Frame format for streaming ('jpeg' or 'raw'). Default: 'jpeg'
@@ -39,6 +42,7 @@ class EldenGymEnv(gym.Env):
         keybinds_filepath,
         siphon_config_filepath,
         memory_attributes=None,
+        actions=None,
         host="localhost:50051",
         reward_function=None,
         frame_format="jpeg",
@@ -101,12 +105,27 @@ class EldenGymEnv(gym.Env):
         # Load keybinds (v2 format: action → keys with index)
         with open(self.keybinds_filepath, "r") as f:
             keybinds_data = json.load(f)
-            self._action_bindings = keybinds_data["actions"]
+            all_action_bindings = keybinds_data["actions"]
 
-        # Sort actions by index to ensure consistent ordering
-        sorted_actions = sorted(
-            self._action_bindings.items(), key=lambda x: x[1]["index"]
-        )
+        # Filter actions if specified
+        if actions is not None:
+            # Validate requested actions exist
+            invalid_actions = set(actions) - set(all_action_bindings.keys())
+            if invalid_actions:
+                raise ValueError(
+                    f"Unknown actions: {invalid_actions}. "
+                    f"Available: {list(all_action_bindings.keys())}"
+                )
+            # Filter to only requested actions, preserving order from actions list
+            self._action_bindings = {a: all_action_bindings[a] for a in actions}
+            # Use order from actions parameter
+            sorted_actions = [(a, self._action_bindings[a]) for a in actions]
+        else:
+            self._action_bindings = all_action_bindings
+            # Sort actions by index to ensure consistent ordering
+            sorted_actions = sorted(
+                self._action_bindings.items(), key=lambda x: x[1]["index"]
+            )
 
         # Build action-to-key mapping based on use_device preference
         self._action_to_key = {}
@@ -116,7 +135,8 @@ class EldenGymEnv(gym.Env):
             else:
                 self._action_to_key[action] = bindings["key"]
 
-        # Create action space (multi-binary for all semantic actions, sorted by index)
+        # Create action space (multi-binary for selected actions)
+        # action_keys preserves the order (index in MultiBinary = position in this list)
         self.action_keys = [action for action, _ in sorted_actions]
         self.action_space = gym.spaces.MultiBinary(len(self.action_keys))
 
